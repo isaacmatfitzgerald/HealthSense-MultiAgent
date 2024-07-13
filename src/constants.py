@@ -1,0 +1,2 @@
+OPENAI_API_KEY = "YOUR_KEY"
+LLM_MODEL_NAME = "gpt-4-0125-preview"
