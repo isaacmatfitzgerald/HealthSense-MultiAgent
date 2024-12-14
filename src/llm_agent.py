@@ -1,3 +1,4 @@
+import urllib.parse
 from langchain import hub
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.agents import create_sql_agent
@@ -7,9 +8,10 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
-from langchain_openai import ChatOpenAI
+#from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
 
-from constants import LLM_MODEL_NAME
+from constants import LLM_MODEL_NAME, OPENAI_API_KEY, USER, PASSWORD, HOST, DATABASE, PORT
 
 CUSTOM_SUFFIX = """Begin!
 
@@ -39,8 +41,8 @@ chat_openai_model_kwargs = {
     "frequency_penalty": 0.0,
     "presence_penalty": -1,
 }
-
-db = SQLDatabase.from_uri("mysql://database-1.c7ew0quossbs.us-east-1.rds.amazonaws.com:3306/ecommerce?user=root")
+PASSWORD = urllib.parse.quote_plus(PASSWORD)
+db = SQLDatabase.from_uri(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}")
 
 def get_chat_openai(model_name):
     """
@@ -141,7 +143,7 @@ def initialize_sql_agent(tool_llm_name: str = LLM_MODEL_NAME, agent_llm_name: st
     toolkit = get_sql_toolkit(tool_llm_name)
     message_history = SQLChatMessageHistory(
         session_id="my-session",
-        connection_string="mysql://localhost:3306/ecommerce?user=root",
+        connection_string=f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}",
         table_name="message_store",
         session_id_field_name="session_id"
     )
