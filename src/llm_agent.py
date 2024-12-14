@@ -40,8 +40,7 @@ chat_openai_model_kwargs = {
     "presence_penalty": -1,
 }
 
-db = SQLDatabase.from_uri("mysql://localhost:3306/ecommerce?user=root")
-
+db = SQLDatabase.from_uri("mysql://database-1.c7ew0quossbs.us-east-1.rds.amazonaws.com:3306/ecommerce?user=root")
 
 def get_chat_openai(model_name):
     """
