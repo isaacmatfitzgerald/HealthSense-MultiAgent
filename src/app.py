@@ -5,7 +5,7 @@ import streamlit as st
 import unidecode
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
-from constants import OPENAI_API_KEY
+from constants import USER, PASSWORD, OPENAI_API_KEY, LLM_MODEL_NAME, HOST, DATABASE, PORT
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
