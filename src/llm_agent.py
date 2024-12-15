@@ -10,8 +10,15 @@ from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
 #from langchain_openai import ChatOpenAI
 from langchain.chat_models import ChatOpenAI
+from constants import LLM_MODEL_NAME
+import streamlit as st
 
-from constants import LLM_MODEL_NAME, OPENAI_API_KEY, USER, PASSWORD, HOST, DATABASE, PORT
+OPENAI_API_KEY = st.secrets["openai"]["api_key"]
+USER = st.secrets["database"]["user"]
+PASSWORD = st.secrets["database"]["password"]
+HOST = st.secrets["database"]["host"]
+DATABASE = st.secrets["database"]["database"]
+PORT = st.secrets["database"]["port"]
 
 CUSTOM_SUFFIX = """Begin!
 
