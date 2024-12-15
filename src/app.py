@@ -26,7 +26,7 @@ sys.path.insert(0, parent_dir)
 os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
 # Configure Streamlit page
-st.set_page_config(page_title="Data Insights")
+st.set_page_config(page_title="Ecommerce SQL Agent", layout="wide")
 
 # Initialize session state
 if 'agent_memory' not in st.session_state:
