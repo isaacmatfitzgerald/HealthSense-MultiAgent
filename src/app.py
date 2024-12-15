@@ -5,7 +5,14 @@ import streamlit as st
 import unidecode
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
-from constants import USER, PASSWORD, OPENAI_API_KEY, LLM_MODEL_NAME, HOST, DATABASE, PORT
+from constants import LLM_MODEL_NAME
+import streamlit as st
+OPENAI_API_KEY = st.secrets["openai"]["api_key"]
+USER = st.secrets["database"]["user"]
+PASSWORD = st.secrets["database"]["password"]
+HOST = st.secrets["database"]["host"]
+DATABASE = st.secrets["database"]["database"]
+PORT = st.secrets["database"]["port"]
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
