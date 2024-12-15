@@ -1,4 +1,4 @@
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 LLM_MODEL_NAME = "gpt-4-0125-preview"
 USER = "root"
 PASSWORD = "MamaGrentina$100!"
