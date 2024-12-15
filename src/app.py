@@ -76,7 +76,7 @@ def reset_conversation():
 
 
 # Display title and reset button
-st.title("Data Insights")
+st.title("Ecommerce SQL Agent")
 col1, col2 = st.columns([3, 1])
 with col2:
     st.button("Reset Chat", on_click=reset_conversation)
