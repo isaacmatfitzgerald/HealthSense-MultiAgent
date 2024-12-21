@@ -237,17 +237,17 @@ if "db_config" in st.session_state:
                 st.error("Connection verification failed")
                 return None
 
-    # Add an input box for SQL queries
-    user_query = st.text_input("Enter your SQL query:")
-    if st.button("Run Query"):
-        if user_query.strip():
-            with st.spinner('Executing query...'):
-                query_result = execute_query(user_query)
-                if query_result is not None:
-                    st.write("Query Result:")
-                    st.write(query_result)
-        else:
-            st.error("Please enter a valid SQL query.")
+    # # Add an input box for SQL queries
+    # user_query = st.text_input("Enter your SQL query:")
+    # if st.button("Run Query"):
+    #     if user_query.strip():
+    #         with st.spinner('Executing query...'):
+    #             query_result = execute_query(user_query)
+    #             if query_result is not None:
+    #                 st.write("Query Result:")
+    #                 st.write(query_result)
+    #     else:
+    #         st.error("Please enter a valid SQL query.")
 else:
     st.warning("Please save your database credentials in the sidebar.")
 
