@@ -5,6 +5,8 @@ import streamlit as st
 import unidecode
 import mysql.connector
 from mysql.connector import Error
+from langchain_community.utilities import SQLDatabase
+import urllib.parse
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
@@ -14,9 +16,6 @@ OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 # Configure Streamlit app page
 st.set_page_config(page_title="SQL and Python Agent")
 
-
-from langchain_community.utilities import SQLDatabase
-import urllib.parse
 
 # Sidebar configuration for database credentials
 st.sidebar.title("MYSQL DB CONFIGURATION")
