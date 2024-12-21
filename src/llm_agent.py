@@ -14,14 +14,11 @@ from constants import LLM_MODEL_NAME
 import streamlit as st
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
-if "db_config" in st.session_state:
-    USER = st.session_state.db_config["USER"]
-    PASSWORD = urllib.parse.quote_plus(st.session_state.db_config["PASSWORD"])
-    HOST = st.session_state.db_config["HOST"]
-    DATABASE = st.session_state.db_config["DATABASE"]
-    PORT = st.session_state.db_config["PORT"]
-else:
-    st.error("Database configuration not found. Please set it in the sidebar.")
+USER = st.secrets["database"]["USER"]
+PASSWORD = st.secrets["database"]["PASSWORD"]
+HOST = st.secrets["database"]["HOST"]
+DATABASE = st.secrets["database"]["DATABASE"]
+PORT = st.secrets["database"]["PORT"]
 
 CUSTOM_SUFFIX = """Begin!
 
