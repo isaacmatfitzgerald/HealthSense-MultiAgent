@@ -3,16 +3,65 @@ import sys
 import warnings
 import streamlit as st
 import unidecode
+import mysql.connector
+from mysql.connector import Error
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
-import streamlit as st
+
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 USER = st.secrets["database"]["USER"]
 PASSWORD = st.secrets["database"]["PASSWORD"]
 HOST = st.secrets["database"]["HOST"]
 DATABASE = st.secrets["database"]["DATABASE"]
 PORT = st.secrets["database"]["PORT"]
+
+# Configure Streamlit app page
+st.set_page_config(page_title="Ecommerce SQL Agent")
+
+# Sidebar for MySQL Configuration
+st.sidebar.title("MySQL Database Configuration")
+st.sidebar.subheader("Enter connection details:")
+
+# Collect credentials from user
+db_config = {
+    "USER": st.sidebar.text_input("User", value="root", placeholder="Enter username"),
+    "PASSWORD": st.sidebar.text_input("Password", type="password", placeholder="Enter password"),
+    "HOST": st.sidebar.text_input("Host", value="localhost", placeholder="Enter host"),
+    "DATABASE": st.sidebar.text_input("Database Name", placeholder="Enter database name"),
+    "PORT": st.sidebar.text_input("Port", value="3306", placeholder="Enter port"),
+}
+
+# Button to save credentials to session state
+if st.sidebar.button("Save and Use Credentials"):
+    st.session_state.db_config = db_config
+    st.sidebar.success("Credentials saved for the session!")
+
+# Function to test the connection
+def test_connection(config):
+    try:
+        connection = mysql.connector.connect(
+            user=config["USER"],
+            password=config["PASSWORD"],
+            host=config["HOST"],
+            database=config["DATABASE"],
+            port=config["PORT"],
+        )
+        if connection.is_connected():
+            st.sidebar.success("Connected to MySQL database successfully!")
+    except Error as e:
+        st.sidebar.error(f"Connection failed: {e}")
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
+# Button to test connection
+if st.sidebar.button("Test Connection"):
+    if "db_config" in st.session_state:
+        test_connection(st.session_state.db_config)
+    else:
+        st.sidebar.error("Please save your credentials first.")
+
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -25,8 +74,6 @@ sys.path.insert(0, parent_dir)
 # Set environment variables
 os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
-# Configure Streamlit app page
-st.set_page_config(page_title="Ecommerce SQL Agent")
 
 # Initialize session state
 if 'agent_memory' not in st.session_state:
@@ -77,6 +124,45 @@ def reset_conversation():
 
 # Display title and reset button
 st.title("Ecommerce SQL Agent")
+st.write("This agent can help you with SQL queries and Python code for data analysis.")
+st.write("Configure your MySQL database connection using the sidebar.")
+
+# Example: Using saved credentials in the chat app
+if "db_config" in st.session_state:
+    db_config = st.session_state.db_config
+    st.write(f"Using database: `{db_config['DATABASE']}` at `{db_config['HOST']}:{db_config['PORT']}`")
+    
+    # Example query function using the saved credentials
+    def execute_query(query):
+        try:
+            connection = mysql.connector.connect(
+                user=db_config["USER"],
+                password=db_config["PASSWORD"],
+                host=db_config["HOST"],
+                database=db_config["DATABASE"],
+                port=db_config["PORT"],
+            )
+            cursor = connection.cursor()
+            cursor.execute(query)
+            return cursor.fetchall()
+        except Error as e:
+            return f"Error: {e}"
+        finally:
+            if 'connection' in locals() and connection.is_connected():
+                connection.close()
+
+    # Add an input box for SQL queries
+    user_query = st.text_input("Enter your SQL query:")
+    if st.button("Run Query"):
+        if user_query.strip():
+            query_result = execute_query(user_query)
+            st.write("Query Result:")
+            st.write(query_result)
+        else:
+            st.error("Please enter a valid SQL query.")
+else:
+    st.warning("Please save your database credentials in the sidebar.")
+
 col1, col2 = st.columns([3, 1])
 with col2:
     st.button("Reset Chat", on_click=reset_conversation)
