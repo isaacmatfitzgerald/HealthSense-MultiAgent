@@ -37,6 +37,8 @@ if 'agent_memory_python' not in st.session_state:
     st.session_state.agent_memory_python = None
 if 'connection_tested' not in st.session_state:
     st.session_state.connection_tested = False
+if 'databases' not in st.session_state:
+    st.session_state.databases = []
 
 # Database configuration inputs
 st.sidebar.title("MYSQL DB CONFIGURATION")
@@ -47,10 +49,68 @@ user = st.sidebar.text_input("User",
 password = st.sidebar.text_input("Password", type="password")
 host = st.sidebar.text_input("Host", 
     value=st.session_state.db_config['HOST'] if st.session_state.db_config['HOST'] else 'localhost')
-database = st.sidebar.text_input("Database Name", 
-    value=st.session_state.db_config['DATABASE'] if st.session_state.db_config['DATABASE'] else '')
 port = st.sidebar.text_input("Port", 
     value=st.session_state.db_config['PORT'] if st.session_state.db_config['PORT'] else '3306')
+
+def get_databases(config):
+    """Fetch available databases using connection details"""
+    try:
+        connection = mysql.connector.connect(
+            host=config['HOST'],
+            user=config['USER'],
+            password=config['PASSWORD'],
+            port=config['PORT']
+        )
+        if connection.is_connected():
+            cursor = connection.cursor()
+            cursor.execute("SHOW DATABASES")
+            databases = [db[0] for db in cursor.fetchall()]
+            cursor.close()
+            connection.close()
+            return databases
+    except Error as e:
+        st.sidebar.error(f"Error fetching databases: {e}")
+        return []
+    return []
+
+# Test connection and get databases
+if st.sidebar.button("Test Connection"):
+    if all([user, password, host, port]):
+        config = {
+            'USER': user,
+            'PASSWORD': password,
+            'HOST': host,
+            'PORT': port
+        }
+        st.session_state.databases = get_databases(config)
+        if st.session_state.databases:
+            st.sidebar.success("Connection successful! Select a database.")
+    else:
+        st.sidebar.error("All fields are required")
+
+# Database dropdown (only show if databases are fetched)
+if st.session_state.databases:
+    database = st.sidebar.selectbox(
+        "Select Database",
+        options=st.session_state.databases,
+        index=0 if st.session_state.databases else None
+    )
+    
+    # Save and connect button
+    if st.sidebar.button("Connect to Database"):
+        st.session_state.db_config = {
+            'USER': user,
+            'PASSWORD': password,
+            'HOST': host,
+            'DATABASE': database,
+            'PORT': port
+        }
+        try:
+            st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
+            st.session_state.python_agent = initialize_python_agent()
+            st.sidebar.success(f"Connected to {database}!")
+        except Exception as e:
+            st.sidebar.error(f"Connection failed: {str(e)}")
 
 def test_connection(config):
     try:
