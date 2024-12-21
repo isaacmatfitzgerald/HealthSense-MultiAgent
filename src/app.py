@@ -236,18 +236,6 @@ if "db_config" in st.session_state:
             else:
                 st.error("Connection verification failed")
                 return None
-
-    # # Add an input box for SQL queries
-    # user_query = st.text_input("Enter your SQL query:")
-    # if st.button("Run Query"):
-    #     if user_query.strip():
-    #         with st.spinner('Executing query...'):
-    #             query_result = execute_query(user_query)
-    #             if query_result is not None:
-    #                 st.write("Query Result:")
-    #                 st.write(query_result)
-    #     else:
-    #         st.error("Please enter a valid SQL query.")
 else:
     st.warning("Please save your database credentials in the sidebar.")
 
@@ -322,26 +310,3 @@ if 'query' not in st.session_state:
 # Initialize session state with unique widget keys
 if 'query_input_key' not in st.session_state:
     st.session_state.query_input_key = 0
-
-# # Query input with unique key
-# query = st.text_input(
-#     "Enter your SQL query:",
-#     key=f"query_input_{st.session_state.query_input_key}"
-# )
-
-# st.session_state.query = query
-
-# if st.button("Execute Query"):
-#     if st.session_state.query:
-#         try:
-#             if 'db_connection' in st.session_state and st.session_state.db_connection:
-#                 result = execute_query(st.session_state.query)
-#                 if result is not None:
-#                     st.write("Query Result:")
-#                     st.write(result)
-#             else:
-#                 st.error("Database connection not established. Please check your credentials.")
-#         except Exception as e:
-#             st.error(f"Error executing query: {str(e)}")
-#     else:
-#         st.warning("Please enter a SQL query")
