@@ -317,7 +317,25 @@ if prompt := st.chat_input("Please ask your question:"):
             display_text_with_images(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
-if query:
-    result = execute_query(query)
-    if result:
-        st.write(result)
+# Initialize session state for query
+if 'query' not in st.session_state:
+    st.session_state.query = ''
+
+# Add query input and execution section
+query = st.text_input("Enter your SQL query:")
+st.session_state.query = query
+
+if st.button("Execute Query"):
+    if st.session_state.query:
+        try:
+            if 'db_connection' in st.session_state and st.session_state.db_connection:
+                result = execute_query(st.session_state.query)
+                if result is not None:
+                    st.write("Query Result:")
+                    st.write(result)
+            else:
+                st.error("Database connection not established. Please check your credentials.")
+        except Exception as e:
+            st.error(f"Error executing query: {str(e)}")
+    else:
+        st.warning("Please enter a SQL query")
