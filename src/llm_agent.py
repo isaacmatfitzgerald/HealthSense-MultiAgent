@@ -140,6 +140,14 @@ def initialize_sql_agent(db_config):
             raise ValueError(f"Missing required field: {field}")
     
     try:
+        # Initialize LLM first
+        llm = ChatOpenAI(
+            temperature=0,
+            model=LLM_MODEL_NAME,
+            openai_api_key=OPENAI_API_KEY
+        )
+        
+        # Create database connection
         password = urllib.parse.quote_plus(db_config['PASSWORD'])
         connection_string = (
             f"mysql+pymysql://{db_config['USER']}:{password}@"
@@ -147,13 +155,20 @@ def initialize_sql_agent(db_config):
         )
         
         db = SQLDatabase.from_uri(connection_string)
-        toolkit = SQLDatabaseToolkit(db=db)
         
+        # Create toolkit with LLM
+        toolkit = SQLDatabaseToolkit(
+            db=db,
+            llm=llm
+        )
+        
+        # Create and return agent
         return create_sql_agent(
-            llm=ChatOpenAI(temperature=0, model=LLM_MODEL_NAME),
+            llm=llm,
             toolkit=toolkit,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True
+            verbose=True,
+            handle_parsing_errors=True
         )
     except Exception as e:
         raise ValueError(f"Failed to initialize SQL agent: {str(e)}")

@@ -319,8 +319,16 @@ if prompt := st.chat_input("Please ask your question:"):
 if 'query' not in st.session_state:
     st.session_state.query = ''
 
-# Add query input and execution section
-query = st.text_input("Enter your SQL query:")
+# Initialize session state with unique widget keys
+if 'query_input_key' not in st.session_state:
+    st.session_state.query_input_key = 0
+
+# Query input with unique key
+query = st.text_input(
+    "Enter your SQL query:",
+    key=f"query_input_{st.session_state.query_input_key}"
+)
+
 st.session_state.query = query
 
 if st.button("Execute Query"):
