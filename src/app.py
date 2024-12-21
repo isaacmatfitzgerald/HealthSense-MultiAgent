@@ -25,7 +25,7 @@ sys.path.insert(0, parent_dir)
 # Set environment variables
 os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
-# Configure Streamlit page
+# Configure Streamlit app page
 st.set_page_config(page_title="Ecommerce SQL Agent")
 
 # Initialize session state
