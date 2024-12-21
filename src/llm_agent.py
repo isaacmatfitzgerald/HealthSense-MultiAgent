@@ -127,24 +127,24 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
 
 
 def initialize_sql_agent(db_config):
-    try:
-        if not db_config or not all(key in db_config for key in ["USER", "PASSWORD", "HOST", "DATABASE", "PORT"]):
-            raise ValueError("Invalid database configuration")
+    if not db_config or not all(db_config.values()):
+        raise ValueError("Invalid or incomplete database configuration")
         
+    try:
         password = urllib.parse.quote_plus(db_config['PASSWORD'])
-        connection_string = f"mysql+pymysql://{db_config['USER']}:{password}@{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
+        connection_string = (
+            f"mysql+pymysql://{db_config['USER']}:{password}@"
+            f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
+        )
         
         db = SQLDatabase.from_uri(connection_string)
-        
-        llm = get_chat_openai(LLM_MODEL_NAME)
         toolkit = SQLDatabaseToolkit(db=db)
         
         return create_sql_agent(
-            llm=llm,
+            llm=ChatOpenAI(temperature=0, model=LLM_MODEL_NAME),
             toolkit=toolkit,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True,
-            handle_parsing_errors=True
+            verbose=True
         )
     except Exception as e:
-        raise Exception(f"Failed to initialize SQL agent: {str(e)}")
+        raise ValueError(f"Failed to initialize SQL agent: {str(e)}")

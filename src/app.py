@@ -22,7 +22,13 @@ st.set_page_config(page_title="SQL and Python Agent")
 
 # Initialize all session state variables
 if 'db_config' not in st.session_state:
-    st.session_state.db_config = None
+    st.session_state.db_config = {
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'DATABASE': '',
+        'PORT': '3306'
+    }
 if 'db_connection' not in st.session_state:
     st.session_state.db_connection = None
 if 'agent_memory_sql' not in st.session_state:
@@ -36,11 +42,11 @@ if 'connection_tested' not in st.session_state:
 st.sidebar.title("MYSQL DB CONFIGURATION")
 st.sidebar.subheader("Enter connection details:")
 
-user = st.sidebar.text_input("User", value="root")
+user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
 password = st.sidebar.text_input("Password", type="password")
-host = st.sidebar.text_input("Host", value="localhost")
+host = st.sidebar.text_input("Host", value=st.session_state.db_config['HOST'])
 database = st.sidebar.text_input("Database Name")
-port = st.sidebar.text_input("Port", value="3306")
+port = st.sidebar.text_input("Port", value=st.session_state.db_config['PORT'])
 
 def test_connection(config):
     try:
