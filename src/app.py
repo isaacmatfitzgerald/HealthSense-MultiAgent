@@ -123,9 +123,8 @@ def reset_conversation():
 
 
 # Display title and reset button
-st.title("Ecommerce SQL Agent")
-st.write("This agent can help you with SQL queries and Python code for data analysis.")
-st.write("Configure your MySQL database connection using the sidebar.")
+st.title("SQL and Python Agent")
+st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
 
 # Example: Using saved credentials in the chat app
 if "db_config" in st.session_state:
