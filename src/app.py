@@ -230,31 +230,57 @@ else:
 
 
 def generate_response(code_type, input_text):
-    """
-    Generate a response based on the provided input text and code type.
+    """Generate responses for both general and database-specific queries"""
+    
+    # General greetings and help messages
+    greetings = ['hello', 'hi', 'hey', 'help', 'what can you do']
+    if input_text.lower() in greetings:
+        return """Hello! I am a SQL and Python agent designed to help you with:
+        
+1. SQL queries and database analysis
+2. Python data visualization
+3. General database questions
 
-    Args:
-        code_type (str): The type of code to be generated ("python" or "sql").
-        input_text (str): The input text to be processed.
-
-    Returns:
-        str: The generated response based on the input text and code type.
-             If no response is generated, it returns "NO_RESPONSE".
-    """
+To get started with database operations, please configure your database connection in the sidebar.
+You can also ask me general questions about SQL, Python, or data analysis!"""
+    
+    # Check if database is configured
+    if not st.session_state.get('sql_agent'):
+        return "Please configure and connect to a database using the sidebar before running queries."
+    
+    # Sanitize input
     local_prompt = unidecode.unidecode(input_text)
+    
     if code_type == "python":
         try:
-            local_response = st.session_state.sql_agent.invoke({"input": local_prompt})['output']
-            print("Response->", local_response)
-        except:
-            return "NO_RESPONSE"
-        exclusion_keywords = ["please provide", "don't know", "more context", "provide more", "vague request"]
-        if any(keyword in local_response.lower() for keyword in exclusion_keywords):
-            return "NO_RESPONSE"
-        local_prompt = {"input": "Write a code in python to plot the following data\n\n" + local_response}
-        return st.session_state.python_agent.invoke(local_prompt)
-    else:
-        return st.session_state.sql_agent.run(local_prompt)
+            # First get SQL query result
+            sql_response = st.session_state.sql_agent.invoke({"input": local_prompt})
+            if not sql_response or 'output' not in sql_response:
+                return "Failed to get SQL query results"
+                
+            local_response = sql_response['output']
+            print("SQL Response->", local_response)
+            
+            # Check for invalid/error responses
+            exclusion_keywords = ["please provide", "don't know", "more context", 
+                                "provide more", "vague request", "no results"]
+            if any(keyword in local_response.lower() for keyword in exclusion_keywords):
+                return "Unable to generate visualization - no valid data returned from query"
+            
+            # Generate visualization
+            viz_prompt = {"input": "Write a code in python to plot the following data\n\n" + local_response}
+            return st.session_state.python_agent.invoke(viz_prompt)
+            
+        except Exception as e:
+            print(f"Error generating response: {str(e)}")
+            return "Failed to generate visualization"
+            
+    else:  # SQL query
+        try:
+            return st.session_state.sql_agent.run(local_prompt)
+        except Exception as e:
+            print(f"SQL query error: {str(e)}")
+            return "Failed to execute SQL query"
 
 
 def reset_conversation():
