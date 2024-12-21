@@ -126,37 +126,25 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     return agent_executor
 
 
-def initialize_sql_agent(db_config, tool_llm_name: str = LLM_MODEL_NAME, agent_llm_name: str = LLM_MODEL_NAME):
-    """
-    Create an agent for SQL-related tasks with dynamic database configuration.
-    """
-    llm_agent = get_chat_openai(agent_llm_name)
-    
-    # Create database connection with provided credentials
-    db = SQLDatabase.from_uri(
-        f"mysql+pymysql://{db_config['USER']}:{db_config['PASSWORD']}@"
-        f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
-    )
-    
-    toolkit = SQLDatabaseToolkit(db=db, llm=llm_agent)
-    message_history = SQLChatMessageHistory(
-        session_id="my-session",
-        connection_string=f"mysql+pymysql://{db_config['USER']}:{db_config['PASSWORD']}@"
-                         f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}",
-        table_name="message_store",
-        session_id_field_name="session_id"
-    )
-    memory = ConversationBufferMemory(memory_key="chat_history", input_key='input', chat_memory=message_history, return_messages=False)
-
-    agent = create_sql_agent(
-        llm=llm_agent,
-        toolkit=toolkit,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-        input_variables=["input", "agent_scratchpad", "chat_history"],
-        suffix=CUSTOM_SUFFIX,
-        memory=memory,
-        agent_executor_kwargs={"memory": memory},
-        verbose=True,
-        handle_parsing_errors=True
-    )
-    return agent
+def initialize_sql_agent(db_config):
+    try:
+        # Verify all required keys exist
+        required_keys = ["USER", "PASSWORD", "HOST", "DATABASE", "PORT"]
+        if not all(key in db_config for key in required_keys):
+            raise ValueError("Missing required database configuration keys")
+            
+        connection_string = (
+            f"mysql+pymysql://{db_config['USER']}:{urllib.parse.quote_plus(db_config['PASSWORD'])}@"
+            f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
+        )
+        
+        db = SQLDatabase.from_uri(connection_string)
+        return create_sql_agent(
+            llm=get_chat_openai(LLM_MODEL_NAME),
+            toolkit=SQLDatabaseToolkit(db=db),
+            agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            verbose=True,
+            handle_parsing_errors=True
+        )
+    except Exception as e:
+        raise Exception(f"Failed to initialize SQL agent: {str(e)}")
