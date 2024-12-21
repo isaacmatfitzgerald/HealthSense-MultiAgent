@@ -10,6 +10,9 @@ import urllib.parse
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
+from sqlalchemy import create_engine, exc
+import pymysql
+import time
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 
@@ -21,12 +24,38 @@ st.set_page_config(page_title="SQL and Python Agent")
 st.sidebar.title("MYSQL DB CONFIGURATION")
 st.sidebar.subheader("Enter connection details:")
 
+# Initialize session state variables
+if 'db_config' not in st.session_state:
+    st.session_state.db_config = None
+if 'db_connection' not in st.session_state:
+    st.session_state.db_connection = None
+if 'connection_tested' not in st.session_state:
+    st.session_state.connection_tested = False
+
 # Collect credentials from user input
 USER = st.sidebar.text_input("User", value="root", placeholder="Enter username")
 PASSWORD = st.sidebar.text_input("Password", value="", type="password", placeholder="Enter password")
 HOST = st.sidebar.text_input("Host", value="localhost", placeholder="Enter database host")
 DATABASE = st.sidebar.text_input("Database Name", placeholder="Enter database name")
 PORT = st.sidebar.text_input("Port", value="3306", placeholder="Enter database port")
+
+def test_connection(config):
+    try:
+        connection_string = (
+            f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@"
+            f"{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
+        )
+        engine = create_engine(connection_string)
+        # Test the connection
+        with engine.connect() as connection:
+            connection.execute("SELECT 1")
+        # Create SQLDatabase instance
+        db = SQLDatabase.from_uri(connection_string)
+        st.sidebar.success("Connected to MySQL database successfully!")
+        return db
+    except SQLAlchemyError as e:
+        st.sidebar.error(f"Database connection failed: {str(e)}")
+        return None
 
 # Save credentials and initialize database connection
 if st.sidebar.button("Save and Use Credentials"):
@@ -37,36 +66,79 @@ if st.sidebar.button("Save and Use Credentials"):
         "DATABASE": DATABASE,
         "PORT": PORT
     }
-    # Reinitialize agents with new credentials
-    st.session_state['agent_memory_sql'] = initialize_sql_agent(st.session_state.db_config)
-    st.session_state['agent_memory_python'] = initialize_python_agent()
-    st.session_state.sql_agent = st.session_state['agent_memory_sql']
-    st.session_state.python_agent = st.session_state['agent_memory_python']
-    st.sidebar.success(f"Credentials saved and agents reinitialized for database `{DATABASE}` at `{HOST}`")
+    
+    # Test connection and store the database object
+    st.session_state.db_connection = test_connection(st.session_state.db_config)
+    
+    if st.session_state.db_connection:
+        st.session_state.connection_tested = True
+        # Initialize agents only if connection is successful
+        try:
+            st.session_state['agent_memory_sql'] = initialize_sql_agent(
+                st.session_state.db_connection
+            )
+            st.session_state['agent_memory_python'] = initialize_python_agent()
+            st.session_state.sql_agent = st.session_state['agent_memory_sql']
+            st.session_state.python_agent = st.session_state['agent_memory_python']
+            st.sidebar.success(f"Agents initialized for database `{DATABASE}` at `{HOST}`")
+        except Exception as e:
+            st.sidebar.error(f"Failed to initialize agents: {str(e)}")
+    else:
+        st.session_state.connection_tested = False
 
-# Function to test connection with user-provided credentials
-def test_connection(config):
+# Add connection management functions
+def create_db_connection(config):
+    """Create and return database connection"""
     try:
-        # Use the dynamic credentials from session state
-        db = SQLDatabase.from_uri(
+        connection_string = (
             f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@"
             f"{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
         )
-        st.sidebar.success("Connected to MySQL database successfully!")
+        engine = create_engine(connection_string, pool_pre_ping=True)
+        db = SQLDatabase.from_uri(connection_string)
         return db
     except Exception as e:
-        st.sidebar.error(f"Connection failed: {e}")
+        st.sidebar.error(f"Failed to create connection: {str(e)}")
         return None
 
-# Button to test the database connection
-if st.sidebar.button("Test Connection"):
-    if "db_config" in st.session_state:
-        db_instance = test_connection(st.session_state.db_config)
-        if db_instance:
-            st.write(f"Connected to `{st.session_state.db_config['DATABASE']}` at `{st.session_state.db_config['HOST']}`")
-    else:
-        st.sidebar.error("Please save your credentials first.")
+def verify_connection():
+    """Verify database connection is active"""
+    if not st.session_state.get('db_config'):
+        st.error("Database configuration not found")
+        return False
+    
+    if not st.session_state.get('db_connection'):
+        st.error("No active database connection")
+        return False
+        
+    try:
+        # Test connection with a simple query
+        st.session_state.db_connection.run("SELECT 1")
+        return True
+    except:
+        # Try to reconnect
+        st.session_state.db_connection = create_db_connection(st.session_state.db_config)
+        return st.session_state.db_connection is not None
 
+def execute_query(query):
+    """Execute query with connection verification"""
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        if verify_connection():
+            try:
+                result = st.session_state.db_connection.run(query)
+                return result
+            except exc.SQLAlchemyError as e:
+                retry_count += 1
+                if retry_count == max_retries:
+                    st.error(f"Query failed after {max_retries} attempts: {str(e)}")
+                    return None
+                time.sleep(1)  # Wait before retry
+        else:
+            st.error("Connection verification failed")
+            return None
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -149,30 +221,33 @@ if "db_config" in st.session_state:
     
     # Example query function using the saved credentials
     def execute_query(query):
-        try:
-            connection = mysql.connector.connect(
-                user=db_config["USER"],
-                password=db_config["PASSWORD"],
-                host=db_config["HOST"],
-                database=db_config["DATABASE"],
-                port=db_config["PORT"],
-            )
-            cursor = connection.cursor()
-            cursor.execute(query)
-            return cursor.fetchall()
-        except Error as e:
-            return f"Error: {e}"
-        finally:
-            if 'connection' in locals() and connection.is_connected():
-                connection.close()
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            if verify_connection():
+                try:
+                    result = st.session_state.db_connection.run(query)
+                    return result
+                except exc.SQLAlchemyError as e:
+                    retry_count += 1
+                    if retry_count == max_retries:
+                        st.error(f"Query failed after {max_retries} attempts: {str(e)}")
+                        return None
+                    time.sleep(1)  # Wait before retry
+            else:
+                st.error("Connection verification failed")
+                return None
 
     # Add an input box for SQL queries
     user_query = st.text_input("Enter your SQL query:")
     if st.button("Run Query"):
         if user_query.strip():
-            query_result = execute_query(user_query)
-            st.write("Query Result:")
-            st.write(query_result)
+            with st.spinner('Executing query...'):
+                query_result = execute_query(user_query)
+                if query_result is not None:
+                    st.write("Query Result:")
+                    st.write(query_result)
         else:
             st.error("Please enter a valid SQL query.")
 else:
@@ -241,3 +316,8 @@ if prompt := st.chat_input("Please ask your question:"):
         with st.chat_message("assistant"):
             display_text_with_images(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+if query:
+    result = execute_query(query)
+    if result:
+        st.write(result)
