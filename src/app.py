@@ -20,71 +20,71 @@ OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 st.set_page_config(page_title="SQL and Python Agent")
 
 
-# Sidebar configuration for database credentials
-st.sidebar.title("MYSQL DB CONFIGURATION")
-st.sidebar.subheader("Enter connection details:")
-
-# Initialize session state variables
+# Initialize all session state variables
 if 'db_config' not in st.session_state:
     st.session_state.db_config = None
 if 'db_connection' not in st.session_state:
     st.session_state.db_connection = None
+if 'agent_memory_sql' not in st.session_state:
+    st.session_state.agent_memory_sql = None
+if 'agent_memory_python' not in st.session_state:
+    st.session_state.agent_memory_python = None
 if 'connection_tested' not in st.session_state:
     st.session_state.connection_tested = False
 
-# Collect credentials from user input
-USER = st.sidebar.text_input("User", value="root", placeholder="Enter username")
-PASSWORD = st.sidebar.text_input("Password", value="", type="password", placeholder="Enter password")
-HOST = st.sidebar.text_input("Host", value="localhost", placeholder="Enter database host")
-DATABASE = st.sidebar.text_input("Database Name", placeholder="Enter database name")
-PORT = st.sidebar.text_input("Port", value="3306", placeholder="Enter database port")
+# Database configuration inputs
+st.sidebar.title("MYSQL DB CONFIGURATION")
+st.sidebar.subheader("Enter connection details:")
+
+user = st.sidebar.text_input("User", value="root")
+password = st.sidebar.text_input("Password", type="password")
+host = st.sidebar.text_input("Host", value="localhost")
+database = st.sidebar.text_input("Database Name")
+port = st.sidebar.text_input("Port", value="3306")
 
 def test_connection(config):
     try:
         connection_string = (
-            f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@"
+            f"mysql+pymysql://{config['USER']}:{urllib.parse.quote_plus(config['PASSWORD'])}@"
             f"{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
         )
         engine = create_engine(connection_string)
-        # Test the connection
-        with engine.connect() as connection:
-            connection.execute("SELECT 1")
-        # Create SQLDatabase instance
-        db = SQLDatabase.from_uri(connection_string)
-        st.sidebar.success("Connected to MySQL database successfully!")
-        return db
-    except SQLAlchemyError as e:
-        st.sidebar.error(f"Database connection failed: {str(e)}")
-        return None
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        st.sidebar.error(f"Connection test failed: {str(e)}")
+        return False
 
-# Save credentials and initialize database connection
-if st.sidebar.button("Save and Use Credentials"):
-    st.session_state.db_config = {
-        "USER": USER,
-        "PASSWORD": urllib.parse.quote_plus(PASSWORD),
-        "HOST": HOST,
-        "DATABASE": DATABASE,
-        "PORT": PORT
-    }
-    
-    # Test connection and store the database object
-    st.session_state.db_connection = test_connection(st.session_state.db_config)
-    
-    if st.session_state.db_connection:
-        st.session_state.connection_tested = True
-        # Initialize agents only if connection is successful
-        try:
-            st.session_state['agent_memory_sql'] = initialize_sql_agent(
-                st.session_state.db_connection
-            )
-            st.session_state['agent_memory_python'] = initialize_python_agent()
-            st.session_state.sql_agent = st.session_state['agent_memory_sql']
-            st.session_state.python_agent = st.session_state['agent_memory_python']
-            st.sidebar.success(f"Agents initialized for database `{DATABASE}` at `{HOST}`")
-        except Exception as e:
-            st.sidebar.error(f"Failed to initialize agents: {str(e)}")
+if st.sidebar.button("Save and Test Connection"):
+    if not all([user, password, host, database, port]):
+        st.sidebar.error("Please fill in all database connection fields")
     else:
-        st.session_state.connection_tested = False
+        # Save configuration with consistent case
+        st.session_state.db_config = {
+            "USER": user,
+            "PASSWORD": password,
+            "HOST": host,
+            "DATABASE": database,
+            "PORT": port
+        }
+        
+        # Test connection before initializing agents
+        if test_connection(st.session_state.db_config):
+            st.session_state.connection_tested = True
+            try:
+                # Initialize agents only after successful connection
+                st.session_state.db_connection = create_db_connection(st.session_state.db_config)
+                st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
+                st.session_state.agent_memory_python = initialize_python_agent()
+                st.session_state.sql_agent = st.session_state.agent_memory_sql
+                st.session_state.python_agent = st.session_state.agent_memory_python
+                st.sidebar.success("Connection successful and agents initialized!")
+            except Exception as e:
+                st.sidebar.error(f"Failed to initialize agents: {str(e)}")
+                st.session_state.connection_tested = False
+        else:
+            st.session_state.connection_tested = False
 
 # Add connection management functions
 def create_db_connection(config):

@@ -128,20 +128,20 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
 
 def initialize_sql_agent(db_config):
     try:
-        # Verify all required keys exist
-        required_keys = ["USER", "PASSWORD", "HOST", "DATABASE", "PORT"]
-        if not all(key in db_config for key in required_keys):
-            raise ValueError("Missing required database configuration keys")
-            
-        connection_string = (
-            f"mysql+pymysql://{db_config['USER']}:{urllib.parse.quote_plus(db_config['PASSWORD'])}@"
-            f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
-        )
+        if not db_config or not all(key in db_config for key in ["USER", "PASSWORD", "HOST", "DATABASE", "PORT"]):
+            raise ValueError("Invalid database configuration")
+        
+        password = urllib.parse.quote_plus(db_config['PASSWORD'])
+        connection_string = f"mysql+pymysql://{db_config['USER']}:{password}@{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
         
         db = SQLDatabase.from_uri(connection_string)
+        
+        llm = get_chat_openai(LLM_MODEL_NAME)
+        toolkit = SQLDatabaseToolkit(db=db)
+        
         return create_sql_agent(
-            llm=get_chat_openai(LLM_MODEL_NAME),
-            toolkit=SQLDatabaseToolkit(db=db),
+            llm=llm,
+            toolkit=toolkit,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
             handle_parsing_errors=True
