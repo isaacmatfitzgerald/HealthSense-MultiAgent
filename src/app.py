@@ -323,25 +323,25 @@ if 'query' not in st.session_state:
 if 'query_input_key' not in st.session_state:
     st.session_state.query_input_key = 0
 
-# Query input with unique key
-query = st.text_input(
-    "Enter your SQL query:",
-    key=f"query_input_{st.session_state.query_input_key}"
-)
+# # Query input with unique key
+# query = st.text_input(
+#     "Enter your SQL query:",
+#     key=f"query_input_{st.session_state.query_input_key}"
+# )
 
-st.session_state.query = query
+# st.session_state.query = query
 
-if st.button("Execute Query"):
-    if st.session_state.query:
-        try:
-            if 'db_connection' in st.session_state and st.session_state.db_connection:
-                result = execute_query(st.session_state.query)
-                if result is not None:
-                    st.write("Query Result:")
-                    st.write(result)
-            else:
-                st.error("Database connection not established. Please check your credentials.")
-        except Exception as e:
-            st.error(f"Error executing query: {str(e)}")
-    else:
-        st.warning("Please enter a SQL query")
+# if st.button("Execute Query"):
+#     if st.session_state.query:
+#         try:
+#             if 'db_connection' in st.session_state and st.session_state.db_connection:
+#                 result = execute_query(st.session_state.query)
+#                 if result is not None:
+#                     st.write("Query Result:")
+#                     st.write(result)
+#             else:
+#                 st.error("Database connection not established. Please check your credentials.")
+#         except Exception as e:
+#             st.error(f"Error executing query: {str(e)}")
+#     else:
+#         st.warning("Please enter a SQL query")
