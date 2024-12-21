@@ -208,34 +208,14 @@ def reset_conversation():
         st.warning("Please configure database credentials first")
 
 
-# Display title and reset button
+# Display title and description
 st.title("SQL and Python Agent")
 st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
 
-# Example: Using saved credentials in the chat app
+# Display connection status
 if "db_config" in st.session_state:
     db_config = st.session_state.db_config
     st.write(f"Using database: `{db_config['DATABASE']}` at `{db_config['HOST']}:{db_config['PORT']}`")
-    
-    # Example query function using the saved credentials
-    def execute_query(query):
-        max_retries = 3
-        retry_count = 0
-        
-        while retry_count < max_retries:
-            if verify_connection():
-                try:
-                    result = st.session_state.db_connection.run(query)
-                    return result
-                except exc.SQLAlchemyError as e:
-                    retry_count += 1
-                    if retry_count == max_retries:
-                        st.error(f"Query failed after {max_retries} attempts: {str(e)}")
-                        return None
-                    time.sleep(1)  # Wait before retry
-            else:
-                st.error("Connection verification failed")
-                return None
 else:
     st.warning("Please save your database credentials in the sidebar.")
 
