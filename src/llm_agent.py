@@ -127,9 +127,18 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
 
 
 def initialize_sql_agent(db_config):
-    if not db_config or not all(db_config.values()):
-        raise ValueError("Invalid or incomplete database configuration")
+    """Initialize SQL agent with proper validation"""
+    required_fields = ['USER', 'PASSWORD', 'HOST', 'DATABASE', 'PORT']
+    
+    # Validate config
+    if not db_config or not isinstance(db_config, dict):
+        raise ValueError("Invalid database configuration")
         
+    # Check required fields
+    for field in required_fields:
+        if field not in db_config or not db_config[field]:
+            raise ValueError(f"Missing required field: {field}")
+    
     try:
         password = urllib.parse.quote_plus(db_config['PASSWORD'])
         connection_string = (

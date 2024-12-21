@@ -23,10 +23,10 @@ st.set_page_config(page_title="SQL and Python Agent")
 # Initialize all session state variables
 if 'db_config' not in st.session_state:
     st.session_state.db_config = {
-        'USER': '',
-        'PASSWORD': '',
+        'USER': None,
+        'PASSWORD': None,
         'HOST': 'localhost',
-        'DATABASE': '',
+        'DATABASE': None,
         'PORT': '3306'
     }
 if 'db_connection' not in st.session_state:
@@ -42,11 +42,15 @@ if 'connection_tested' not in st.session_state:
 st.sidebar.title("MYSQL DB CONFIGURATION")
 st.sidebar.subheader("Enter connection details:")
 
-user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
+user = st.sidebar.text_input("User", 
+    value=st.session_state.db_config['USER'] if st.session_state.db_config['USER'] else '')
 password = st.sidebar.text_input("Password", type="password")
-host = st.sidebar.text_input("Host", value=st.session_state.db_config['HOST'])
-database = st.sidebar.text_input("Database Name")
-port = st.sidebar.text_input("Port", value=st.session_state.db_config['PORT'])
+host = st.sidebar.text_input("Host", 
+    value=st.session_state.db_config['HOST'] if st.session_state.db_config['HOST'] else 'localhost')
+database = st.sidebar.text_input("Database Name", 
+    value=st.session_state.db_config['DATABASE'] if st.session_state.db_config['DATABASE'] else '')
+port = st.sidebar.text_input("Port", 
+    value=st.session_state.db_config['PORT'] if st.session_state.db_config['PORT'] else '3306')
 
 def test_connection(config):
     try:
@@ -62,35 +66,23 @@ def test_connection(config):
         st.sidebar.error(f"Connection test failed: {str(e)}")
         return False
 
-if st.sidebar.button("Save and Test Connection"):
-    if not all([user, password, host, database, port]):
-        st.sidebar.error("Please fill in all database connection fields")
-    else:
-        # Save configuration with consistent case
+if st.sidebar.button("Save and Connect"):
+    if all([user, password, host, database, port]):
         st.session_state.db_config = {
-            "USER": user,
-            "PASSWORD": password,
-            "HOST": host,
-            "DATABASE": database,
-            "PORT": port
+            'USER': user,
+            'PASSWORD': password,
+            'HOST': host,
+            'DATABASE': database,
+            'PORT': port
         }
-        
-        # Test connection before initializing agents
-        if test_connection(st.session_state.db_config):
-            st.session_state.connection_tested = True
-            try:
-                # Initialize agents only after successful connection
-                st.session_state.db_connection = create_db_connection(st.session_state.db_config)
-                st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
-                st.session_state.agent_memory_python = initialize_python_agent()
-                st.session_state.sql_agent = st.session_state.agent_memory_sql
-                st.session_state.python_agent = st.session_state.agent_memory_python
-                st.sidebar.success("Connection successful and agents initialized!")
-            except Exception as e:
-                st.sidebar.error(f"Failed to initialize agents: {str(e)}")
-                st.session_state.connection_tested = False
-        else:
-            st.session_state.connection_tested = False
+        try:
+            st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
+            st.session_state.python_agent = initialize_python_agent()
+            st.sidebar.success("Connection successful!")
+        except Exception as e:
+            st.sidebar.error(f"Connection failed: {str(e)}")
+    else:
+        st.sidebar.error("All fields are required")
 
 # Add connection management functions
 def create_db_connection(config):
