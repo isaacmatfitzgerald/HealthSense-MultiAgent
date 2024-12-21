@@ -5,6 +5,8 @@ import streamlit as st
 import unidecode
 import mysql.connector
 from mysql.connector import Error
+from langchain_community.utilities import SQLDatabase
+import urllib.parse
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
@@ -14,46 +16,52 @@ OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 # Configure Streamlit app page
 st.set_page_config(page_title="SQL and Python Agent")
 
-# Sidebar for MySQL Configuration
+
+# Sidebar configuration for database credentials
 st.sidebar.title("MYSQL DB CONFIGURATION")
 st.sidebar.subheader("Enter connection details:")
 
-# Collect credentials from user
-db_config = {
-    "USER": st.sidebar.text_input("User", value="root", placeholder="Enter username"),
-    "PASSWORD": st.sidebar.text_input("Password", type="password", placeholder="Enter password"),
-    "HOST": st.sidebar.text_input("Host", value="localhost", placeholder="Enter host"),
-    "DATABASE": st.sidebar.text_input("Database Name", placeholder="Enter database name"),
-    "PORT": st.sidebar.text_input("Port", value="3306", placeholder="Enter port"),
-}
+# Collect credentials from user input
+USER = st.sidebar.text_input("User", value="root", placeholder="Enter username")
+PASSWORD = st.sidebar.text_input("Password", value="", type="password", placeholder="Enter password")
+HOST = st.sidebar.text_input("Host", value="localhost", placeholder="Enter database host")
+DATABASE = st.sidebar.text_input("Database Name", placeholder="Enter database name")
+PORT = st.sidebar.text_input("Port", value="3306", placeholder="Enter database port")
 
-# Button to save credentials to session state
+# Save credentials and initialize database connection
 if st.sidebar.button("Save and Use Credentials"):
-    st.session_state.db_config = db_config
-    st.sidebar.success("Credentials saved for the session!")
+    # Dynamically save credentials in session state
+    st.session_state.db_config = {
+        "USER": USER,
+        "PASSWORD": urllib.parse.quote_plus(PASSWORD),
+        "HOST": HOST,
+        "DATABASE": DATABASE,
+        "PORT": PORT
+    }
 
-# Function to test the connection
+    # Log debug info (optional)
+    st.sidebar.success(f"Credentials saved for database `{DATABASE}` at `{HOST}`")
+
+# Function to test connection with user-provided credentials
 def test_connection(config):
     try:
-        connection = mysql.connector.connect(
-            user=config["USER"],
-            password=config["PASSWORD"],
-            host=config["HOST"],
-            database=config["DATABASE"],
-            port=config["PORT"],
+        # Use the dynamic credentials from session state
+        db = SQLDatabase.from_uri(
+            f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@"
+            f"{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
         )
-        if connection.is_connected():
-            st.sidebar.success("Connected to MySQL database successfully!")
-    except Error as e:
+        st.sidebar.success("Connected to MySQL database successfully!")
+        return db
+    except Exception as e:
         st.sidebar.error(f"Connection failed: {e}")
-    finally:
-        if 'connection' in locals() and connection.is_connected():
-            connection.close()
+        return None
 
-# Button to test connection
+# Button to test the database connection
 if st.sidebar.button("Test Connection"):
     if "db_config" in st.session_state:
-        test_connection(st.session_state.db_config)
+        db_instance = test_connection(st.session_state.db_config)
+        if db_instance:
+            st.write(f"Connected to `{st.session_state.db_config['DATABASE']}` at `{st.session_state.db_config['HOST']}`")
     else:
         st.sidebar.error("Please save your credentials first.")
 
