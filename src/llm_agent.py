@@ -14,11 +14,11 @@ from constants import LLM_MODEL_NAME
 import streamlit as st
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
-USER = st.secrets["database"]["USER"]
-PASSWORD = st.secrets["database"]["PASSWORD"]
-HOST = st.secrets["database"]["HOST"]
-DATABASE = st.secrets["database"]["DATABASE"]
-PORT = st.secrets["database"]["PORT"]
+# USER = st.secrets["database"]["USER"]
+# PASSWORD = st.secrets["database"]["PASSWORD"]
+# HOST = st.secrets["database"]["HOST"]
+# DATABASE = st.secrets["database"]["DATABASE"]
+# PORT = st.secrets["database"]["PORT"]
 
 CUSTOM_SUFFIX = """Begin!
 
