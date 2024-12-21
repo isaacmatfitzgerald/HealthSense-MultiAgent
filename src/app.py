@@ -17,10 +17,10 @@ DATABASE = st.secrets["database"]["DATABASE"]
 PORT = st.secrets["database"]["PORT"]
 
 # Configure Streamlit app page
-st.set_page_config(page_title="Ecommerce SQL Agent")
+st.set_page_config(page_title="SQL and Python Agent")
 
 # Sidebar for MySQL Configuration
-st.sidebar.title("MySQL Database Configuration")
+st.sidebar.title("MYSQL DB CONFIGURATION")
 st.sidebar.subheader("Enter connection details:")
 
 # Collect credentials from user
