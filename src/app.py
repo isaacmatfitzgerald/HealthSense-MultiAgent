@@ -30,7 +30,6 @@ PORT = st.sidebar.text_input("Port", value="3306", placeholder="Enter database p
 
 # Save credentials and initialize database connection
 if st.sidebar.button("Save and Use Credentials"):
-    # Dynamically save credentials in session state
     st.session_state.db_config = {
         "USER": USER,
         "PASSWORD": urllib.parse.quote_plus(PASSWORD),
@@ -38,9 +37,12 @@ if st.sidebar.button("Save and Use Credentials"):
         "DATABASE": DATABASE,
         "PORT": PORT
     }
-
-    # Log debug info (optional)
-    st.sidebar.success(f"Credentials saved for database `{DATABASE}` at `{HOST}`")
+    # Reinitialize agents with new credentials
+    st.session_state['agent_memory_sql'] = initialize_sql_agent(st.session_state.db_config)
+    st.session_state['agent_memory_python'] = initialize_python_agent()
+    st.session_state.sql_agent = st.session_state['agent_memory_sql']
+    st.session_state.python_agent = st.session_state['agent_memory_python']
+    st.sidebar.success(f"Credentials saved and agents reinitialized for database `{DATABASE}` at `{HOST}`")
 
 # Function to test connection with user-provided credentials
 def test_connection(config):
@@ -80,8 +82,11 @@ os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
 # Initialize session state
 if 'agent_memory' not in st.session_state:
-    st.session_state['agent_memory_sql'] = initialize_sql_agent()
-    st.session_state['agent_memory_python'] = initialize_python_agent()
+    if 'db_config' in st.session_state:
+        st.session_state['agent_memory_sql'] = initialize_sql_agent(st.session_state.db_config)
+        st.session_state['agent_memory_python'] = initialize_python_agent()
+    else:
+        st.warning("Please configure database credentials first")
 
 if 'messages' not in st.session_state:
     st.session_state.messages = []
@@ -121,8 +126,11 @@ def generate_response(code_type, input_text):
 
 def reset_conversation():
     st.session_state.messages = []
-    st.session_state.sql_agent = initialize_sql_agent()
-    st.session_state.python_agent = initialize_python_agent()
+    if 'db_config' in st.session_state:
+        st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
+        st.session_state.python_agent = initialize_python_agent()
+    else:
+        st.warning("Please configure database credentials first")
 
 
 # Display title and reset button

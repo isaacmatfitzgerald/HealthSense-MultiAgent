@@ -14,11 +14,6 @@ from constants import LLM_MODEL_NAME
 import streamlit as st
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
-USER = st.secrets["database"]["USER"]
-PASSWORD = st.secrets["database"]["PASSWORD"]
-HOST = st.secrets["database"]["HOST"]
-DATABASE = st.secrets["database"]["DATABASE"]
-PORT = st.secrets["database"]["PORT"]
 
 CUSTOM_SUFFIX = """Begin!
 
@@ -48,8 +43,6 @@ chat_openai_model_kwargs = {
     "frequency_penalty": 0.0,
     "presence_penalty": -1,
 }
-PASSWORD = urllib.parse.quote_plus(PASSWORD)
-db = SQLDatabase.from_uri(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}")
 
 def get_chat_openai(model_name):
     """
@@ -133,24 +126,23 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     return agent_executor
 
 
-def initialize_sql_agent(tool_llm_name: str = LLM_MODEL_NAME, agent_llm_name: str = LLM_MODEL_NAME):
+def initialize_sql_agent(db_config, tool_llm_name: str = LLM_MODEL_NAME, agent_llm_name: str = LLM_MODEL_NAME):
     """
-    Create an agent for SQL-related tasks.
-
-    Args:
-        tool_llm_name (str): The name or identifier of the language model for SQL toolkit.
-        agent_llm_name (str): The name or identifier of the language model for the agent.
-
-    Returns:
-        Agent: An agent configured for SQL-related tasks.
-
+    Create an agent for SQL-related tasks with dynamic database configuration.
     """
-    # agent_tools = sql_agent_tools()
-    llm_agent = get_agent_llm(agent_llm_name)
-    toolkit = get_sql_toolkit(tool_llm_name)
+    llm_agent = get_chat_openai(agent_llm_name)
+    
+    # Create database connection with provided credentials
+    db = SQLDatabase.from_uri(
+        f"mysql+pymysql://{db_config['USER']}:{db_config['PASSWORD']}@"
+        f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"
+    )
+    
+    toolkit = SQLDatabaseToolkit(db=db, llm=llm_agent)
     message_history = SQLChatMessageHistory(
         session_id="my-session",
-        connection_string=f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}",
+        connection_string=f"mysql+pymysql://{db_config['USER']}:{db_config['PASSWORD']}@"
+                         f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}",
         table_name="message_store",
         session_id_field_name="session_id"
     )
