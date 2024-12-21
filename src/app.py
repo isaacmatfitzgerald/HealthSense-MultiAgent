@@ -10,11 +10,6 @@ from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
-# USER = st.secrets["database"]["USER"]
-# PASSWORD = st.secrets["database"]["PASSWORD"]
-# HOST = st.secrets["database"]["HOST"]
-# DATABASE = st.secrets["database"]["DATABASE"]
-# PORT = st.secrets["database"]["PORT"]
 
 # Configure Streamlit app page
 st.set_page_config(page_title="SQL and Python Agent")
