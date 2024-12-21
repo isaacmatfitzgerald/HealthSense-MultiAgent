@@ -81,19 +81,22 @@ os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
 
 # Initialize session state
-if 'agent_memory' not in st.session_state:
-    if 'db_config' in st.session_state:
-        st.session_state['agent_memory_sql'] = initialize_sql_agent(st.session_state.db_config)
-        st.session_state['agent_memory_python'] = initialize_python_agent()
-    else:
-        st.warning("Please configure database credentials first")
-
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 
-if 'agent' not in st.session_state:
-    st.session_state.sql_agent = st.session_state['agent_memory_sql']
-    st.session_state.python_agent = st.session_state['agent_memory_python']
+# Initialize agents only after credentials are available
+if 'db_config' in st.session_state:
+    if 'agent_memory_sql' not in st.session_state:
+        st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
+    if 'agent_memory_python' not in st.session_state:
+        st.session_state.agent_memory_python = initialize_python_agent()
+    
+    if 'sql_agent' not in st.session_state:
+        st.session_state.sql_agent = st.session_state.agent_memory_sql
+    if 'python_agent' not in st.session_state:
+        st.session_state.python_agent = st.session_state.agent_memory_python
+else:
+    st.warning("Please configure database credentials first")
 
 
 def generate_response(code_type, input_text):
@@ -127,8 +130,10 @@ def generate_response(code_type, input_text):
 def reset_conversation():
     st.session_state.messages = []
     if 'db_config' in st.session_state:
-        st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
-        st.session_state.python_agent = initialize_python_agent()
+        st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
+        st.session_state.agent_memory_python = initialize_python_agent()
+        st.session_state.sql_agent = st.session_state.agent_memory_sql
+        st.session_state.python_agent = st.session_state.agent_memory_python
     else:
         st.warning("Please configure database credentials first")
 
