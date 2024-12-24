@@ -8,7 +8,6 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
-#from langchain_openai import ChatOpenAI
 from langchain.chat_models import ChatOpenAI
 from constants import LLM_MODEL_NAME
 import streamlit as st
@@ -22,13 +21,13 @@ Relevant pieces of previous conversation:
 (Note: Only reference this information if it is relevant to the current query.)
 
 Question: {input}
-Thought Process: It is imperative that I do not fabricate information not present in any table or engage in hallucination; maintaining trustworthiness is crucial.
-In SQL queries involving string or TEXT comparisons like first_name, I must use the `LOWER()` function for case-insensitive comparisons and the `LIKE` operator for fuzzy matching. 
+Thought Process: It is imperative that you do not fabricate information not present in any table or engage in hallucination; maintaining trustworthiness is crucial.
+In SQL queries involving string or TEXT comparisons like first_name, you must use the `LOWER()` function for case-insensitive comparisons and the `LIKE` operator for fuzzy matching. 
 Queries for return percentage is defined as total number of returns divided by total number of orders. You can join orders table with users table to know more about each user.
 Make sure that query is related to the SQL database and tables you are working with.
 If the result is empty, the Answer should be "No results found". DO NOT hallucinate an answer if there is no result.
 
-My final response should STRICTLY be the output of SQL query.
+Your final response should STRICTLY be the output of a SQL query.
 
 {agent_scratchpad}
 """
@@ -107,7 +106,7 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
         AgentExecutor: An agent executor configured for Python-related tasks.
 
     """
-    instructions = """You are an agent designed to write a python code to answer questions.
+    instructions = """You are an agent designed to write python code to answer questions.
             You have access to a python REPL, which you can use to execute python code.
             If you get an error, debug your code and try again.
             You might know the answer without running any code, but you should still run the code to get the answer.
