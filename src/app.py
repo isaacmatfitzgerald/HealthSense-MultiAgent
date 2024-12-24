@@ -64,7 +64,7 @@ def get_databases(config):
         if connection.is_connected():
             cursor = connection.cursor()
             cursor.execute("SHOW DATABASES")
-            databases = [db[0] for db in cursor.fetchall()]
+            databases = [db[0] for db in cursor.fetchall() if db[0] not in ('sys', 'mysql', 'performance_schema', 'information_schema')]
             cursor.close()
             connection.close()
             return databases
