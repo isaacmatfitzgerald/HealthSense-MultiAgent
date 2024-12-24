@@ -14,7 +14,7 @@ from sqlalchemy import create_engine, exc, text
 import pymysql
 import time
 
-OPENAI_API_KEY = st.secrets["openai"]["openai_api_key"]
+OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 
 # Configure Streamlit app page
 st.set_page_config(page_title="SQL and Python Agent")
