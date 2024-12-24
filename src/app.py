@@ -35,7 +35,7 @@ if 'databases' not in st.session_state:
 
 # 2. Sidebar user inputs.
 st.sidebar.title("DATABASE CONFIGURATION")
-st.sidebar.subheader("Enter MySQL connection details:")
+st.sidebar.text("Enter MySQL connection details:")
 
 user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
 password = st.sidebar.text_input("Password", type="password", value=st.session_state.db_config['PASSWORD'])
@@ -270,7 +270,7 @@ You can also ask me general questions about SQL, Python, or data analysis!"""
                 return "Unable to generate visualization - no valid data returned from query"
             
             # Generate visualization
-            viz_prompt = {"input": "Write a code in python to plot the following data\n\n" + local_response}
+            viz_prompt = {"input": "Write code in python to plot the following data\n\n" + local_response}
             return st.session_state.python_agent.invoke(viz_prompt)
             
         except Exception as e:
