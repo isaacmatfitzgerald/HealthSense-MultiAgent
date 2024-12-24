@@ -126,7 +126,7 @@ if st.session_state.db_connected and st.session_state.databases:
 
 # Main page
 st.title("SQL and Python Agent")
-st.write("Configure your MySQL database connection using the sidebar.")
+st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
 
 if st.session_state.db_connected and st.session_state.db_config['DATABASE']:
     st.write(
