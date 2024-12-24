@@ -296,16 +296,16 @@ def reset_conversation():
         st.warning("Please configure database credentials first")
 
 
-# Display title and description
-st.title("SQL and Python Agent")
-st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
+# # Display title and description
+# st.title("SQL and Python Agent")
+# st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
 
-# Display connection status
-if "db_config" in st.session_state:
-    db_config = st.session_state.db_config
-    st.write(f"Using database: `{db_config['DATABASE']}` at `{db_config['HOST']}:{db_config['PORT']}`")
-else:
-    st.warning("Please save your database credentials in the sidebar.")
+# # Display connection status
+# if "db_config" in st.session_state:
+#     db_config = st.session_state.db_config
+#     st.write(f"Using database: `{db_config['DATABASE']}` at `{db_config['HOST']}:{db_config['PORT']}`")
+# else:
+#     st.warning("Please save your database credentials in the sidebar.")
 
 col1, col2 = st.columns([3, 1])
 with col2:
