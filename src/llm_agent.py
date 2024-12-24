@@ -9,7 +9,7 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
 from langchain.chat_models import ChatOpenAI
-from constants import LLM_MODEL_NAME, CUSTOM_SUFFIX, instructions
+from constants import LLM_MODEL_NAME, CUSTOM_SUFFIX, INSTRUCTIONS
 import streamlit as st
 
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
@@ -93,7 +93,7 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     #         """
     tools = [PythonREPLTool()]
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
-    prompt = base_prompt.partial(instructions=instructions)
+    prompt = base_prompt.partial(instructions=INSTRUCTIONS)
     agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     return agent_executor

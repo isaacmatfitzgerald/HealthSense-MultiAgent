@@ -18,7 +18,7 @@ Your final response should STRICTLY be the output of a SQL query.
 {agent_scratchpad}
 """
 
-instructions = """You are an agent designed to write python code to answer questions.
+INSTRUCTIONS = """You are an agent designed to write python code to answer questions.
         You have access to a python REPL, which you can use to execute python code.
         If you get an error, debug your code and try again.
         You might know the answer without running any code, but you should still run the code to get the answer.
