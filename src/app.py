@@ -34,8 +34,8 @@ if 'databases' not in st.session_state:
     st.session_state.databases = []
 
 # 2. Sidebar user inputs.
-st.sidebar.title("MYSQL DB CONFIGURATION")
-st.sidebar.subheader("Enter connection details:")
+st.sidebar.title("DATABASE CONFIGURATION")
+st.sidebar.subheader("Enter MySQL database connection details:")
 
 user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
 password = st.sidebar.text_input("Password", type="password", value=st.session_state.db_config['PASSWORD'])
@@ -294,18 +294,6 @@ def reset_conversation():
         st.session_state.python_agent = st.session_state.agent_memory_python
     else:
         st.warning("Please configure database credentials first")
-
-
-# # Display title and description
-# st.title("SQL and Python Agent")
-# st.write("This agent can help you with SQL queries and Python code for data analysis. Configure your MySQL database connection using the sidebar.")
-
-# # Display connection status
-# if "db_config" in st.session_state:
-#     db_config = st.session_state.db_config
-#     st.write(f"Using database: `{db_config['DATABASE']}` at `{db_config['HOST']}:{db_config['PORT']}`")
-# else:
-#     st.warning("Please save your database credentials in the sidebar.")
 
 col1, col2 = st.columns([3, 1])
 with col2:
