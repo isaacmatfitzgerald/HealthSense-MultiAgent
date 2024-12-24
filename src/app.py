@@ -34,8 +34,8 @@ if 'databases' not in st.session_state:
     st.session_state.databases = []
 
 # 2. Sidebar user inputs.
-st.sidebar.title("DATABASE CONFIGURATION")
-st.sidebar.subheader("Enter MySQL database connection details:")
+st.sidebar.title("DATABASE CONFIG")
+st.sidebar.subheader("Enter MySQL DB connection details:")
 
 user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
 password = st.sidebar.text_input("Password", type="password", value=st.session_state.db_config['PASSWORD'])
