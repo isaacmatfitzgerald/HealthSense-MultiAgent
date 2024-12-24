@@ -35,7 +35,7 @@ if 'databases' not in st.session_state:
 
 # 2. Sidebar user inputs.
 st.sidebar.title("DATABASE CONFIGURATION")
-st.sidebar.subheader("Enter MySQL DB connection details:")
+st.sidebar.subheader("Enter MySQL connection details:")
 
 user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'])
 password = st.sidebar.text_input("Password", type="password", value=st.session_state.db_config['PASSWORD'])
@@ -355,7 +355,7 @@ if prompt := st.chat_input("Please ask your question:"):
             response = generate_response("sql", f"{prompt}\n\nGiven previous agent responses:\n{prev_context}\n")
         else:
             response = generate_response("sql", prompt)
-        with st.chat_message("assistant", avatar="🤖"):
+        with st.chat_message("assistant", avatar="❇️"):
             display_text_with_images(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
