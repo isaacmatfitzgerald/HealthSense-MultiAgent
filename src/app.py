@@ -10,25 +10,98 @@ import urllib.parse
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
 from constants import LLM_MODEL_NAME
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, text
 import pymysql
 import time
 
-OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
+OPENAI_API_KEY = st.secrets["openai"]["openai_api_key"]
 
 # Configure Streamlit app page
 st.set_page_config(page_title="SQL and Python Agent")
 
-
-# Initialize all session state variables
-if 'db_config' not in st.session_state:
+# Initialize session states
+if "db_config" not in st.session_state:
     st.session_state.db_config = {
-        'USER': None,
-        'PASSWORD': None,
+        'USER': '',
+        'PASSWORD': '',
         'HOST': 'localhost',
-        'DATABASE': None,
+        'DATABASE': '',
         'PORT': '3306'
     }
+
+if "db_connected" not in st.session_state:
+    st.session_state.db_connected = False
+
+# Sidebar inputs
+st.sidebar.title("MYSQL DB CONFIGURATION")
+st.sidebar.subheader("Enter connection details:")
+
+user = st.sidebar.text_input("User", value=st.session_state.db_config['USER'], key="user_input")
+password = st.sidebar.text_input("Password", type="password", key="password_input")
+host = st.sidebar.text_input("Host", value=st.session_state.db_config['HOST'], key="host_input")
+database = st.sidebar.text_input("Database Name", value=st.session_state.db_config['DATABASE'], key="db_input")
+port = st.sidebar.text_input("Port", value=st.session_state.db_config['PORT'], key="port_input")
+
+# Dynamically change button label
+button_label = "Save and Connect" if not st.session_state.db_connected else "Update Connection"
+
+def test_connection(config):
+    """Quick check to see if we can connect to the DB."""
+    try:
+        connection_string = (
+            f"mysql+pymysql://{config['USER']}:{urllib.parse.quote_plus(config['PASSWORD'])}"
+            f"@{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
+        )
+        engine = create_engine(connection_string)
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        st.sidebar.error(f"Connection test failed: {str(e)}")
+        return False
+
+# Single button to either save/connect or update
+if st.sidebar.button(button_label, key="connect_button"):
+    # Validate input
+    if all([user, password, host, database, port]):
+        # Build config
+        new_config = {
+            'USER': user,
+            'PASSWORD': password,
+            'HOST': host,
+            'DATABASE': database,
+            'PORT': port
+        }
+        # Test connection
+        if test_connection(new_config):
+            # Connection successful => update session state
+            st.session_state.db_config = new_config
+            try:
+                st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
+                st.session_state.python_agent = initialize_python_agent()
+                st.session_state.db_connected = True
+                st.sidebar.success(f"Connection to '{database}' successful!")
+            except Exception as e:
+                st.sidebar.error(f"Connection failed: {str(e)}")
+                st.session_state.db_connected = False
+        else:
+            st.session_state.db_connected = False
+    else:
+        st.sidebar.error("All fields are required")
+
+# Main App
+st.title("SQL and Python Agent")
+st.write("Configure your MySQL database connection using the sidebar.")
+
+if st.session_state.db_connected:
+    st.write(
+        f"Using database: `{st.session_state.db_config['DATABASE']}` "
+        f"at `{st.session_state.db_config['HOST']}:{st.session_state.db_config['PORT']}`"
+    )
+else:
+    st.warning("Not connected. Provide credentials and click the button in the sidebar.")
+
+# Initialize all session state variables
 if 'db_connection' not in st.session_state:
     st.session_state.db_connection = None
 if 'agent_memory_sql' not in st.session_state:
@@ -39,18 +112,6 @@ if 'connection_tested' not in st.session_state:
     st.session_state.connection_tested = False
 if 'databases' not in st.session_state:
     st.session_state.databases = []
-
-# Database configuration inputs
-st.sidebar.title("MYSQL DB CONFIGURATION")
-st.sidebar.subheader("Enter connection details:")
-
-user = st.sidebar.text_input("User", 
-    value=st.session_state.db_config['USER'] if st.session_state.db_config['USER'] else '')
-password = st.sidebar.text_input("Password", type="password")
-host = st.sidebar.text_input("Host", 
-    value=st.session_state.db_config['HOST'] if st.session_state.db_config['HOST'] else 'localhost')
-port = st.sidebar.text_input("Port", 
-    value=st.session_state.db_config['PORT'] if st.session_state.db_config['PORT'] else '3306')
 
 def get_databases(config):
     """Fetch available databases using connection details"""
