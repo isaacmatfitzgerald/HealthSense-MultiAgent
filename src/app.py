@@ -238,13 +238,13 @@ def generate_response(code_type, input_text):
     greetings = ['hello', 'hi', 'hey', 'help', 'what can you do']
     if input_text.lower() in greetings:
         return """Hello! I am a SQL and Python agent designed to help you with:
-        
-1. SQL queries and database analysis
-2. Python data visualization
-3. General database questions
+            1. SQL queries and database analysis
+            2. Python data visualization
+            3. General database questions
 
-To get started with database operations, please configure your database connection in the sidebar.
-You can also ask me general questions about SQL, Python, or data analysis!"""
+            To get started with database operations, please configure your database connection in the sidebar.
+            You can also ask me general questions about SQL, Python, or data analysis!
+        """
     
     # Check if database is configured
     if not st.session_state.get('sql_agent'):
@@ -315,7 +315,7 @@ if prompt := st.chat_input("Please ask your question:"):
     with st.chat_message("user", avatar="🚀"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
-    keywords = ["plot", "graph", "chart", "diagram"]
+    keywords = ["plot", "graph", "chart", "diagram", "visualize", "visualisation", "show"]
     if any(keyword in prompt.lower() for keyword in keywords):
         prev_context = ""
         for msg in reversed(st.session_state.messages):
