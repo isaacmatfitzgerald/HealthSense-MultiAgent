@@ -29,8 +29,6 @@ For plotting:
  • Pick the best method for the user’s data or context.
 
 Your final response must return only Python code, wrapped in:
-```python
-<code>
-```
+```python <code>```
 """
 
