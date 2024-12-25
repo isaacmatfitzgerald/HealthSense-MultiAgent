@@ -9,11 +9,27 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
 from langchain.chat_models import ChatOpenAI
-from constants import LLM_MODEL_NAME, CUSTOM_SUFFIX, INSTRUCTIONS
+from constants import LLM_MODEL_NAME
 import streamlit as st
 
-CUSTOM_SUFFIX = CUSTOM_SUFFIX
-INSTRUCTIONS = INSTRUCTIONS
+CUSTOM_SUFFIX = """Begin!
+
+Relevant pieces of previous conversation:
+{chat_history}
+(Note: Only reference this information if it is relevant to the current query.)
+
+Question: {input}
+Thought Process: It is imperative that I do not fabricate information not present in any table or engage in hallucination; maintaining trustworthiness is crucial.
+In SQL queries involving string or TEXT comparisons like first_name, I must use the `LOWER()` function for case-insensitive comparisons and the `LIKE` operator for fuzzy matching. 
+Queries for return percentage is defined as total number of returns divided by total number of orders. You can join orders table with users table to know more about each user.
+Make sure that query is related to the SQL database and tables you are working with.
+If the result is empty, the Answer should be "No results found". DO NOT hallucinate an answer if there is no result.
+
+My final response should STRICTLY be the output of SQL query.
+
+{agent_scratchpad}
+"""
+
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 
 langchain_chat_kwargs = {
@@ -82,20 +98,20 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     Returns:
         AgentExecutor: An agent executor configured for Python-related tasks.
     """
-    # instructions = """You are an agent designed to write python code to answer questions.
-    #         You have access to a python REPL, which you can use to execute python code.
-    #         If you get an error, debug your code and try again.
-    #         You might know the answer without running any code, but you should still run the code to get the answer.
-    #         If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
-    #         Always output the python code only.
-    #         Generate the code <code> for plotting the previous data in plotly, in the format requested. 
-    #         The solution should be given using plotly and only plotly. Do not use matplotlib.
-    #         Return the code <code> in the following
-    #         format ```python <code>```
-    #         """
+    instructions = """You are an agent designed to write python code to answer questions.
+            You have access to a python REPL, which you can use to execute python code.
+            If you get an error, debug your code and try again.
+            You might know the answer without running any code, but you should still run the code to get the answer.
+            If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
+            Always output the python code only.
+            Generate the code <code> for plotting the previous data in plotly, in the format requested. 
+            The solution should be given using plotly and only plotly. Do not use matplotlib.
+            Return the code <code> in the following
+            format ```python <code>```
+            """
     tools = [PythonREPLTool()]
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
-    prompt = base_prompt.partial(instructions=INSTRUCTIONS)
+    prompt = base_prompt.partial(instructions=instructions)
     agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     return agent_executor
