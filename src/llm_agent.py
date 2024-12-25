@@ -12,6 +12,8 @@ from langchain.chat_models import ChatOpenAI
 from constants import LLM_MODEL_NAME, CUSTOM_SUFFIX, INSTRUCTIONS
 import streamlit as st
 
+CUSTOM_SUFFIX = CUSTOM_SUFFIX
+INSTRUCTIONS = INSTRUCTIONS
 OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
 
 langchain_chat_kwargs = {
