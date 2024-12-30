@@ -99,15 +99,17 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     Returns:
         AgentExecutor: An agent executor configured for Python-related tasks.
     """
-    instructions = """You are an agent designed to write and execute python code to answer questions.
-    You have access to a python REPL, which you can use to execute python code.
-    If you get an error, debug your code and try again.
-    Only use the output of your code to answer the question. 
-    You might know the answer without running any code, but you should still run the code to get the answer.
-    If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
-    Generate the code <code> for plotting the previous data in the format requested. 
-    Return the code <code> in the following format ```python <code>```
-    """
+    instructions = """You are an agent designed to write python code to answer questions.
+            You have access to a python REPL, which you can use to execute python code.
+            If you get an error, debug your code and try again.
+            You might know the answer without running any code, but you should still run the code to get the answer.
+            If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
+            Always output the python code only.
+            Generate the code <code> for plotting the previous data in plotly, in the format requested. 
+            The solution should be given using plotly and only plotly. Do not use matplotlib.
+            Return the code <code> in the following
+            format ```python <code>```
+            """
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
     prompt = base_prompt.partial(instructions=instructions)
     tools = [PythonREPLTool()]
