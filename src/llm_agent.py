@@ -105,10 +105,8 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     Only use the output of your code to answer the question. 
     You might know the answer without running any code, but you should still run the code to get the answer.
     If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
-    You will receive data from a SQL query. You are supposed to plot a graph to visualize that data. Always output the python code only. You may use Plotly, Streamlit’s built-in charts, or even ECharts via Python libraries (e.g., pyecharts).
-    Pick the best method for the user’s data or context.
-    Your final response must return only Python code, in the following format:
-    ```python <code>```
+    Generate the code <code> for plotting the previous data in the format requested. 
+    Return the code <code> in the following format ```python <code>```
     """
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
     prompt = base_prompt.partial(instructions=instructions)
