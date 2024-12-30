@@ -99,29 +99,21 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     Returns:
         AgentExecutor: An agent executor configured for Python-related tasks.
     """
-    instructions = """You are an agent designed to write python code to answer questions.
-    You have access to a python REPL to execute code.
+    instructions = """You are an agent designed to write and execute python code to answer questions.
+    You have access to a python REPL, which you can use to execute python code.
     If you get an error, debug your code and try again.
-    You might know the answer without running code, but you should still run code to get the answer.
+    Only use the output of your code to answer the question. 
+    You might know the answer without running any code, but you should still run the code to get the answer.
     If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
-    Always output the python code only. You may use Plotly, Streamlit’s built-in charts, or even ECharts via Python libraries (e.g., pyecharts).
+    You will receive data from a SQL query. You are supposed to plot a graph to visualize that data. Always output the python code only. You may use Plotly, Streamlit’s built-in charts, or even ECharts via Python libraries (e.g., pyecharts).
     Pick the best method for the user’s data or context.
     Your final response must return only Python code, in the following format:
     ```python <code>```
     """
-    tools = [PythonREPLTool()]
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
-    # prompt = base_prompt.partial(instructions=instructions)
-    # agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
-
-    prompt_messages = base_prompt.format_prompt(instructions=instructions).to_messages()
-    combined_prompt = ChatPromptTemplate.from_messages(prompt_messages)
-    agent = create_openai_functions_agent(
-        ChatOpenAI(model=agent_llm_name, temperature=0),
-        tools,
-        combined_prompt
-    )
-
+    prompt = base_prompt.partial(instructions=instructions)
+    tools = [PythonREPLTool()]
+    agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     return agent_executor
 
