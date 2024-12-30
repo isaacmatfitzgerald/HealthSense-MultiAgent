@@ -124,7 +124,9 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     # base_prompt = hub.pull("langchain-ai/openai-functions-template")
     # prompt = base_prompt.partial(instructions=instructions)
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
-    full_prompt = f"{base_prompt.template}\n\n{instructions}"
+    messages = base_prompt.format_prompt().to_messages()
+    combined_text = "\n".join(m.content for m in messages if m.content)
+    full_prompt = f"{combined_text}\n\n{instructions}"
     prompt = ChatPromptTemplate.from_template(full_prompt)
 
     agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
