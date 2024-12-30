@@ -1,5 +1,6 @@
 import urllib.parse
 from langchain import hub
+from langchain.prompts.chat import ChatPromptTemplate
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.agents import create_sql_agent
 from langchain.agents.agent_types import AgentType
@@ -120,8 +121,12 @@ def initialize_python_agent(agent_llm_name: str = LLM_MODEL_NAME):
     ```python <code>```
     """
     tools = [PythonREPLTool()]
+    # base_prompt = hub.pull("langchain-ai/openai-functions-template")
+    # prompt = base_prompt.partial(instructions=instructions)
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
-    prompt = base_prompt.partial(instructions=instructions)
+    full_prompt = f"{base_prompt.template}\n\n{instructions}"
+    prompt = ChatPromptTemplate.from_template(full_prompt)
+
     agent = create_openai_functions_agent(ChatOpenAI(model=agent_llm_name, temperature=0), tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     return agent_executor
