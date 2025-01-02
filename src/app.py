@@ -249,7 +249,7 @@ def generate_response(code_type, input_text):
     # Check if database is configured
     if not st.session_state.get('sql_agent'):
         return "Please configure and connect to a database using the sidebar before running queries."
-    
+
     # Sanitize input
     local_prompt = unidecode.unidecode(input_text)
     
