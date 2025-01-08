@@ -1,14 +1,15 @@
 import streamlit as st
 
 st.set_page_config(page_title="SQL and Python Agent")
-
-# Main Page Title
+# MAIN PAGE
 st.title("SQL and Python Agent")
 
-# Sidebar
+# SIDE BAR
 st.sidebar.title("DATABASE CONFIGURATION")
+st.sidebar.subheader("Enter MySQL connection details:", divider=True)
 
-# Chat Input
+
+# CHAT INPUT
 if prompt := st.chat_input("Please ask your question:"):
    with st.chat_message("user", avatar="🚀"):
      st.markdown(prompt)
