@@ -11,4 +11,4 @@ st.sidebar.title("DATABASE CONFIGURATION")
 # Chat Input
 if prompt := st.chat_input("Please ask your question:"):
    with st.chat_message("user", avatar="🚀"):
-     st.markdowqn(prompt)
+     st.markdown(prompt)
