@@ -10,3 +10,4 @@ st.sidebar.title("DATABASE CONFIGURATION")
 
 # Chat Input
 st.chat_input("Please ask your question:")
+st.chat_message("user", avatar="🚀")
