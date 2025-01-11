@@ -282,7 +282,10 @@ def generate_response(code_type, input_text):
             return st.session_state.sql_agent.run(local_prompt)
         except Exception as e:
             print(f"SQL query error: {str(e)}")
-            return "Failed to execute SQL query"
+            return """Failed to execute SQL query. You can try the following:
+                1. Check Manage App on the bottom left of Streamlit app to see app logs
+                2. Ensure you have enough OpenAI API credits. This is most likely to be the issue.
+            """
 
 
 def reset_conversation():

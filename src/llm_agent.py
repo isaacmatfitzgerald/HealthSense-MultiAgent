@@ -1,12 +1,10 @@
 import urllib.parse
-from langchain import hub
-from langchain.prompts.chat import ChatPromptTemplate
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.agents import create_sql_agent
 from langchain.agents.agent_types import AgentType
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory #why
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
-from langchain_community.chat_message_histories import SQLChatMessageHistory
+from langchain_community.chat_message_histories import SQLChatMessageHistory #why
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
 from langchain.chat_models import ChatOpenAI
@@ -154,11 +152,25 @@ def initialize_sql_agent(db_config):
             llm=llm
         )
         
+        message_history = SQLChatMessageHistory(
+            session_id="my-session",
+            connection_string = (
+            f"mysql+pymysql://{db_config['USER']}:{password}@"
+            f"{db_config['HOST']}:{db_config['PORT']}/{db_config['DATABASE']}"), #added recently
+            table_name="message_store",
+            session_id_field_name="session_id"
+        )
+        memory = ConversationBufferMemory(memory_key="chat_history", input_key='input', chat_memory=message_history, return_messages=False) #added recently
+
         # Create and return agent
         return create_sql_agent(
             llm=llm,
             toolkit=toolkit,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            input_variables=["input", "agent_scratchpad", "chat_history"], #added recently
+            suffix=CUSTOM_SUFFIX, #added recently
+            memory=memory, #added recently
+            agent_executor_kwargs={"memory": memory}, #added recently
             verbose=True,
             handle_parsing_errors=True
         )
