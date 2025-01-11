@@ -1,10 +1,11 @@
 import urllib.parse
+from langchain import hub
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.agents import create_sql_agent
 from langchain.agents.agent_types import AgentType
-from langchain.memory import ConversationBufferMemory #why
+from langchain.memory import ConversationBufferMemory 
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
-from langchain_community.chat_message_histories import SQLChatMessageHistory #why
+from langchain_community.chat_message_histories import SQLChatMessageHistory 
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.tools import PythonREPLTool
 from langchain.chat_models import ChatOpenAI
