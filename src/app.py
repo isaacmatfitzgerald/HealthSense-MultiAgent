@@ -331,6 +331,7 @@ if prompt := st.chat_input("Please ask your question:"):
                 display_text_with_images(response)
             st.session_state.messages.append({"role": "error", "content": response})
         else:
+            code = display_code_plots(response['output'])
             try:
                 code = f"import pandas as pd\n{code.replace('fig.show()', '')}"
                 code += "st.plotly_chart(fig, theme='streamlit', use_container_width=True)"
