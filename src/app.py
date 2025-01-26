@@ -366,5 +366,3 @@ if 'query' not in st.session_state:
 # Initialize session state with unique widget keys
 if 'query_input_key' not in st.session_state:
     st.session_state.query_input_key = 0
-
-    #test add
