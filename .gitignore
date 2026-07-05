@@ -1,2 +1,5 @@
 .streamlit/secrets.toml
 .idea/
+venv/
+src/__pycache__/
+src/graph_checkpoints.sqlite*
