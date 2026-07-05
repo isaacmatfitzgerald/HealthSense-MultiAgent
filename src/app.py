@@ -1,21 +1,16 @@
+import uuid
 import os
 import sys
 import warnings
 import streamlit as st
 import unidecode
-import mysql.connector
-from mysql.connector import Error
-from langchain_community.utilities import SQLDatabase
 import urllib.parse
 from helper import display_code_plots, display_text_with_images
 from llm_agent import initialize_python_agent, initialize_sql_agent
-from constants import LLM_MODEL_NAME
-from sqlalchemy import create_engine, exc, text
-import pymysql
-import time
+from sqlalchemy import create_engine, text
 
 
-OPENAI_API_KEY = st.secrets["openai"]["OPENAI_API_KEY"]
+ANTHROPIC_API_KEY = st.secrets["anthropic"]["ANTHROPIC_API_KEY"]
 st.set_page_config(page_title="SQL and Python Agent")
 
 
@@ -36,7 +31,7 @@ if 'databases' not in st.session_state:
     st.session_state.databases = []
 
 
-# 2. Sidebar user inputs.
+# 2. Sidebar user inputs. return True, dbs if successful, False, [] if not. (Tuple)
 st.sidebar.title("DATABASE CONFIGURATION")
 st.sidebar.subheader("Enter MySQL connection details:", divider=True)
 
@@ -60,29 +55,16 @@ def test_connection(config):
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
 
-        # If we succeed, fetch list of databases for the dropdown
-        try:
-            connection = mysql.connector.connect(
-                host=config['HOST'],
-                user=config['USER'],
-                password=config['PASSWORD'],
-                port=config['PORT']
-            )
-            if connection.is_connected():
-                cursor = connection.cursor()
-                cursor.execute("SHOW DATABASES")
-                dbs = [db[0] for db in cursor.fetchall() 
-                       if db[0] not in ('sys', 'mysql','performance_schema','information_schema')]
-                cursor.close()
-                connection.close()
-                return True, dbs
-        except Error as e:
-            st.sidebar.error(f"Error fetching databases: {e}")
-            return False, []
+            # Fetch list of databases using the SAME connection
+            result = conn.execute(text("SHOW DATABASES"))
+            dbs = [
+                row[0] for row in result
+                if row[0] not in ('sys', 'mysql', 'performance_schema', 'information_schema')
+            ]
+        return True, dbs
     except Exception as e:
         st.sidebar.error(f"Connection test failed: {str(e)}")
         return False, []
-    return False, []
 
 
 # 4. Single button to connect/update.
@@ -110,7 +92,7 @@ if st.sidebar.button(button_label):
         st.sidebar.error("All fields are required")
 
 
-# 5. If connected, show the databases in a dropdown for selection.
+# 5. If connected, show the databases in a dropdown for selection. Initialize the agents if the database is changed.
 if st.session_state.db_connected and st.session_state.databases:
     db_choice = st.sidebar.selectbox(
         "Select Database",
@@ -121,7 +103,7 @@ if st.session_state.db_connected and st.session_state.databases:
     
     if db_choice and db_choice != st.session_state.db_config['DATABASE']:
         # Update the config to the selected DB
-        st.session_state.db_config['DATABASE'] = db_choice
+        st.session_state.db_config['DATABASE'] = str(db_choice)
         try:
             st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
             st.session_state.python_agent = initialize_python_agent()
@@ -143,72 +125,6 @@ if st.session_state.db_connected and st.session_state.db_config['DATABASE']:
 else:
     st.warning("Not connected. Provide credentials and click the button in the sidebar.")
 
-# Initialize all session state variables
-if 'db_connection' not in st.session_state:
-    st.session_state.db_connection = None
-if 'agent_memory_sql' not in st.session_state:
-    st.session_state.agent_memory_sql = None
-if 'agent_memory_python' not in st.session_state:
-    st.session_state.agent_memory_python = None
-if 'connection_tested' not in st.session_state:
-    st.session_state.connection_tested = False
-
-# Add connection management functions
-def create_db_connection(config):
-    """Create and return database connection"""
-    try:
-        connection_string = (
-            f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@"
-            f"{config['HOST']}:{config['PORT']}/{config['DATABASE']}"
-        )
-        engine = create_engine(connection_string, pool_pre_ping=True)
-        db = SQLDatabase.from_uri(connection_string)
-        return db
-    except Exception as e:
-        st.sidebar.error(f"Failed to create connection: {str(e)}")
-        return None
-
-def verify_connection():
-    """Verify database connection is active"""
-    if not st.session_state.get('db_config'):
-        st.error("Database configuration not found")
-        return False
-    
-    if not st.session_state.get('db_connection'):
-        st.error("No active database connection")
-        return False
-        
-    try:
-        # Test connection with a simple query
-        st.session_state.db_connection.run("SELECT 1")
-        return True
-    except:
-        # Try to reconnect
-        st.session_state.db_connection = create_db_connection(st.session_state.db_config)
-        return st.session_state.db_connection is not None
-
-def execute_query(query):
-    """Execute query with connection verification"""
-    max_retries = 3
-    retry_count = 0
-    
-    while retry_count < max_retries:
-        if verify_connection():
-            try:
-                result = st.session_state.db_connection.run(query)
-                return result
-            except exc.SQLAlchemyError as e:
-                retry_count += 1
-                if retry_count == max_retries:
-                    st.error(f"Query failed after {max_retries} attempts: {str(e)}")
-                    return None
-                time.sleep(1)  # Wait before retry
-        else:
-            st.error("Connection verification failed")
-            return None
-
-# Suppress warnings
-warnings.filterwarnings("ignore")
 
 # Configure paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -216,7 +132,7 @@ parent_dir = os.path.join(current_dir, "..")
 sys.path.insert(0, parent_dir)
 
 # Set environment variables
-os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+os.environ['ANTHROPIC_API_KEY'] = ANTHROPIC_API_KEY
 
 
 # Initialize session state
@@ -224,23 +140,14 @@ if 'messages' not in st.session_state:
     st.session_state.messages = []
 
 # Initialize agents only after credentials are available
-if 'db_config' in st.session_state:
-    if 'agent_memory_sql' not in st.session_state:
-        st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
-
-    if 'agent_memory_python' not in st.session_state:
-        st.session_state.agent_memory_python = initialize_python_agent()
-    
+if st.session_state.get('db_connected') and st.session_state.db_config.get('DATABASE'):
     if 'sql_agent' not in st.session_state:
-        st.session_state.sql_agent = st.session_state.agent_memory_sql
-        
+        st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
     if 'python_agent' not in st.session_state:
-        st.session_state.python_agent = st.session_state.agent_memory_python
-else:
-    st.warning("Please configure database credentials first")
+        st.session_state.python_agent = initialize_python_agent()
 
 
-def generate_response(code_type, input_text):
+def generate_response(response_mode, input_text):
     """Generate responses for both general and database-specific queries"""
     
     # General greetings and help messages
@@ -262,7 +169,7 @@ def generate_response(code_type, input_text):
     # Sanitize input
     local_prompt = unidecode.unidecode(input_text)
     
-    if code_type == "python":
+    if response_mode == "python":
         try:
             # First get SQL query result
             sql_response = st.session_state.sql_agent.invoke({"input": local_prompt})
@@ -270,6 +177,11 @@ def generate_response(code_type, input_text):
                 return "Failed to get SQL query results"
                 
             local_response = sql_response['output']
+            if isinstance(local_response, list):
+                local_response = ' '.join(
+                    item.get('text', str(item)) if isinstance(item, dict) else str(item)
+                    for item in local_response
+                )
             print("SQL Response->", local_response)
             
             # Check for invalid/error responses
@@ -288,19 +200,25 @@ def generate_response(code_type, input_text):
             
     else:  # SQL code
         try:
-            return st.session_state.sql_agent.run(local_prompt)
+            sql_response = st.session_state.sql_agent.invoke({"input": local_prompt})
+            output = sql_response.get('output', "Failed to get SQL query results")
+            if isinstance(output, list):
+                output = ' '.join(
+                    item.get('text', str(item)) if isinstance(item, dict) else str(item)
+                    for item in output
+                )
+            return output
         except Exception as e:
             print(f"SQL query error: {str(e)}")
-            return """Failed to execute SQL query. Ensure you have enough OpenAI API credits. This is most likely to be the issue."""
+            return """Failed to execute SQL query. Ensure you have enough Anthropic API credits. This is most likely to be the issue."""
 
 
 def reset_conversation():
     st.session_state.messages = []
-    if 'db_config' in st.session_state:
-        st.session_state.agent_memory_sql = initialize_sql_agent(st.session_state.db_config)
-        st.session_state.agent_memory_python = initialize_python_agent()
-        st.session_state.sql_agent = st.session_state.agent_memory_sql
-        st.session_state.python_agent = st.session_state.agent_memory_python
+    st.session_state.chat_session_id = str(uuid.uuid4())   # new session ID = fresh memory
+    if st.session_state.get('db_connected') and st.session_state.db_config.get('DATABASE'):
+        st.session_state.sql_agent = initialize_sql_agent(st.session_state.db_config)
+        st.session_state.python_agent = initialize_python_agent()
     else:
         st.warning("Please configure database credentials first")
 
@@ -320,58 +238,39 @@ for message in st.session_state.messages:
 
 # Accept user input
 if prompt := st.chat_input("Please ask your question:"):
-    # Display user message in chat
     with st.chat_message("user", avatar="🚀"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
+
     keywords = ["plot", "graph", "chart", "diagram", "visualize", "visualisation", "show"]
     if any(keyword in prompt.lower() for keyword in keywords):
-        prev_context = ""
-        for msg in reversed(st.session_state.messages):
-            if msg["role"] == "assistant":
-                prev_context = msg["content"] + "\n\n" + prev_context
-                break
-        if prev_context:
-            prompt += f"\n\nGiven previous agent responses:\n{prev_context}\n"
         response = generate_response("python", prompt)
-        if response == "NO_RESPONSE":
-            response = "Please try again with a re-phrased query and more context"
+
+        if not isinstance(response, dict) or 'output' not in response:
+            error_msg = "Please try again with a re-phrased query and more context"
             with st.chat_message("error"):
-                display_text_with_images(response)
-            st.session_state.messages.append({"role": "error", "content": response})
+                display_text_with_images(error_msg)
+            st.session_state.messages.append({"role": "error", "content": error_msg})
         else:
             code = display_code_plots(response['output'])
-            try:
-                code = f"import pandas as pd\n{code.replace('fig.show()', '')}"
-                code += "st.plotly_chart(fig, theme='streamlit', use_container_width=True)"
-                exec(code)
-                st.session_state.messages.append({"role": "plot", "content": code})
-            except:
-                response = "Please try again with a re-phrased query and more context"
+            if code is None:
+                error_msg = "Could not extract plotting code from the response"
                 with st.chat_message("error"):
-                    display_text_with_images(response)
-                st.session_state.messages.append({"role": "error", "content": response})
+                    display_text_with_images(error_msg)
+                st.session_state.messages.append({"role": "error", "content": error_msg})
+            else:
+                try:
+                    code = f"import pandas as pd\n{code.replace('fig.show()', '')}"
+                    code += "st.plotly_chart(fig, theme='streamlit', use_container_width=True)"
+                    exec(code)
+                    st.session_state.messages.append({"role": "plot", "content": code})
+                except Exception:
+                    error_msg = "Please try again with a re-phrased query and more context"
+                    with st.chat_message("error"):
+                        display_text_with_images(error_msg)
+                    st.session_state.messages.append({"role": "error", "content": error_msg})
     else:
-        if len(st.session_state.messages) > 1:
-            context_length = 0
-            prev_context = ""
-            for msg in reversed(st.session_state.messages):
-                if context_length > 1:
-                    break
-                if msg["role"] == "assistant":
-                    prev_context = msg["content"] + "\n\n" + prev_context
-                    context_length += 1
-            response = generate_response("sql", f"{prompt}\n\nGiven previous agent responses:\n{prev_context}\n")
-        else:
-            response = generate_response("sql", prompt)
+        response = generate_response("answer", prompt)
         with st.chat_message("assistant", avatar="❇️"):
             display_text_with_images(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
-
-# Initialize session state for query
-if 'query' not in st.session_state:
-    st.session_state.query = ''
-
-# Initialize session state with unique widget keys
-if 'query_input_key' not in st.session_state:
-    st.session_state.query_input_key = 0
