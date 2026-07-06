@@ -261,3 +261,9 @@ patient's data.
   natural-language parsing at write-confirmation boundaries. Rationale:
   transaction boundary ≠ conversation; constrained input at irreversible actions.
   Revisit only in Round 3 for the voice modality.
+
+## 11.Python environment: 
+
+ALWAYS use the project venv. Install with
+  ./venv/bin/pip install <pkg>; run with ./venv/bin/python. Never use
+  global python/pip. Maintain requirements.txt after any install.
