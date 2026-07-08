@@ -9,6 +9,10 @@ ANTHROPIC_API_KEY = st.secrets["anthropic"]["ANTHROPIC_API_KEY"]
 st.set_page_config(page_title="SQL and Python Agent")
 os.environ['ANTHROPIC_API_KEY'] = ANTHROPIC_API_KEY
 
+os.environ['LANGSMITH_TRACING'] = st.secrets["langsmith"]["LANGSMITH_TRACING"]
+os.environ['LANGSMITH_API_KEY'] = st.secrets["langsmith"]["LANGSMITH_API_KEY"]
+os.environ['LANGSMITH_PROJECT'] = st.secrets["langsmith"]["LANGSMITH_PROJECT"]
+os.environ['LANGSMITH_ENDPOINT'] = st.secrets["langsmith"]["LANGSMITH_ENDPOINT"]
 
 @st.cache_resource
 def get_graph():
@@ -30,7 +34,7 @@ def reset_conversation():
     st.session_state.thread_id = str(uuid.uuid4())   # new thread_id = fresh graph memory
 
 
-st.title("SQL and Python Agent")
+st.title("MULTI AGENT HOSPITAL ASSISTANT")
 st.caption("Ask a data question, request a visualization, or ask a policy/FAQ question.")
 
 col1, col2 = st.columns([3, 1])
