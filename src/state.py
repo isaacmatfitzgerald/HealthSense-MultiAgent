@@ -23,6 +23,7 @@ class AgentState(TypedDict):
     intent: str
     sql_result: str
     plot_code: str
+    rag_query: str
     documents: list[Document]
     proceed_to_generate: bool
     rephrase_count: int
