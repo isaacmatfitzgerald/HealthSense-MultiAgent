@@ -14,6 +14,12 @@ os.environ['LANGSMITH_API_KEY'] = st.secrets["langsmith"]["LANGSMITH_API_KEY"]
 os.environ['LANGSMITH_PROJECT'] = st.secrets["langsmith"]["LANGSMITH_PROJECT"]
 os.environ['LANGSMITH_ENDPOINT'] = st.secrets["langsmith"]["LANGSMITH_ENDPOINT"]
 
+os.environ['MYSQL_READER_HOST'] = st.secrets["mysql"]["MYSQL_READER_HOST"]
+os.environ['MYSQL_READER_PORT'] = st.secrets["mysql"]["MYSQL_READER_PORT"]
+os.environ['MYSQL_READER_USER'] = st.secrets["mysql"]["MYSQL_READER_USER"]
+os.environ['MYSQL_READER_PASSWORD'] = st.secrets["mysql"]["MYSQL_READER_PASSWORD"]
+os.environ['MYSQL_READER_DATABASE'] = st.secrets["mysql"]["MYSQL_READER_DATABASE"]
+
 @st.cache_resource
 def get_graph():
     from graph import build_graph  # imported after ANTHROPIC_API_KEY is set above

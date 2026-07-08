@@ -8,6 +8,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
+from agents.sql_agent import sql_agent
 from constants import SUPERVISOR_MODEL
 from state import AgentState
 
@@ -86,6 +87,8 @@ def stub_not_implemented(state: AgentState) -> dict:
 def route_after_supervisor(state: AgentState) -> str:
     if state["intent"] == "out_of_scope":
         return "fallback"
+    if state["intent"] == "data_query":
+        return "sql_agent"
     return "stub_not_implemented"
 
 
@@ -94,16 +97,22 @@ graph_builder.add_node("reset_turn_state", reset_turn_state)
 graph_builder.add_node("supervisor", supervisor)
 graph_builder.add_node("fallback", fallback)
 graph_builder.add_node("stub_not_implemented", stub_not_implemented)
+graph_builder.add_node("sql_agent", sql_agent)
 
 graph_builder.add_edge(START, "reset_turn_state")
 graph_builder.add_edge("reset_turn_state", "supervisor")
 graph_builder.add_conditional_edges(
     "supervisor",
     route_after_supervisor,
-    {"fallback": "fallback", "stub_not_implemented": "stub_not_implemented"},
+    {
+        "fallback": "fallback",
+        "stub_not_implemented": "stub_not_implemented",
+        "sql_agent": "sql_agent",
+    },
 )
 graph_builder.add_edge("fallback", END)
 graph_builder.add_edge("stub_not_implemented", END)
+graph_builder.add_edge("sql_agent", END)
 
 
 def build_graph():
