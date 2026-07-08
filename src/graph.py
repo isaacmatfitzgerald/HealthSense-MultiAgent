@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
 from agents.sql_agent import sql_agent
+from agents.viz_agent import viz_agent
 from constants import SUPERVISOR_MODEL
 from state import AgentState
 
@@ -87,9 +88,15 @@ def stub_not_implemented(state: AgentState) -> dict:
 def route_after_supervisor(state: AgentState) -> str:
     if state["intent"] == "out_of_scope":
         return "fallback"
-    if state["intent"] == "data_query":
+    if state["intent"] in ("data_query", "visualization"):
         return "sql_agent"
     return "stub_not_implemented"
+
+
+def route_after_sql_agent(state: AgentState) -> str:
+    if state["intent"] == "visualization":
+        return "viz_agent"
+    return END
 
 
 graph_builder = StateGraph(AgentState)
@@ -98,6 +105,7 @@ graph_builder.add_node("supervisor", supervisor)
 graph_builder.add_node("fallback", fallback)
 graph_builder.add_node("stub_not_implemented", stub_not_implemented)
 graph_builder.add_node("sql_agent", sql_agent)
+graph_builder.add_node("viz_agent", viz_agent)
 
 graph_builder.add_edge(START, "reset_turn_state")
 graph_builder.add_edge("reset_turn_state", "supervisor")
@@ -112,7 +120,10 @@ graph_builder.add_conditional_edges(
 )
 graph_builder.add_edge("fallback", END)
 graph_builder.add_edge("stub_not_implemented", END)
-graph_builder.add_edge("sql_agent", END)
+graph_builder.add_conditional_edges(
+    "sql_agent", route_after_sql_agent, {"viz_agent": "viz_agent", END: END}
+)
+graph_builder.add_edge("viz_agent", END)
 
 
 def build_graph():

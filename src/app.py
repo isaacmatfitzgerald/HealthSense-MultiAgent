@@ -1,7 +1,7 @@
 import uuid
 import os
 import streamlit as st
-from helper import display_text_with_images
+from helper import display_code_plots, display_text_with_images
 from langchain_core.messages import HumanMessage
 
 
@@ -52,6 +52,8 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message["role"] == "assistant":
             display_text_with_images(message["content"])
+        elif message["role"] == "plot":
+            exec(message["content"])
         else:
             st.markdown(message["content"])
 
@@ -63,6 +65,7 @@ if prompt := st.chat_input("Please ask your question:"):
 
     config = {"configurable": {"thread_id": st.session_state.thread_id}}
     response = None
+    plot_code = None
     for chunk in graph.stream(
         {"messages": [HumanMessage(content=prompt)]},
         config=config,
@@ -71,9 +74,25 @@ if prompt := st.chat_input("Please ask your question:"):
         for node_update in chunk.values():
             if "messages" in node_update:
                 response = node_update["messages"][-1].content
+            if "plot_code" in node_update:
+                plot_code = node_update["plot_code"]
 
     response = response or 'Something went wrong — please try again.'
 
-    with st.chat_message("assistant", avatar="❇️"):
-        display_text_with_images(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    if plot_code is None:
+        with st.chat_message("assistant", avatar="❇️"):
+            display_text_with_images(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+    if plot_code:
+        code = display_code_plots(plot_code)
+        if code:
+            code = code.replace("fig.show()", "")
+            code += "\nst.plotly_chart(fig, theme='streamlit', use_container_width=True)"
+            try:
+                with st.chat_message("plot"):
+                    exec(code)
+                st.session_state.messages.append({"role": "plot", "content": code})
+            except Exception:
+                with st.chat_message("error"):
+                    st.markdown("Could not render the chart for this data.")
