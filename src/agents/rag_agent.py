@@ -80,7 +80,7 @@ generate_llm = init_chat_model(WORKER_MODEL, temperature=0)
 
 
 def rewrite_query(state: AgentState) -> dict:
-    original_question = state["messages"][-3].content
+    original_question = state["messages"][-1].content
     previous_query = state["rag_query"]
     if previous_query:
         human_content = (

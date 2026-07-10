@@ -1,4 +1,14 @@
 {
     "git.ignoreLimitWarning": true,
-    "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python"
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/__init__.py": true,
+        "**/graph_checkpoints.sqlite": true,
+        "**/graph_checkpoints.sqlite-wal": true,
+        "**/graph_checkpoints.sqlite-shm": true,
+        "**/chroma_db": true,
+        "**/chat_history.db": true
+    }
 }

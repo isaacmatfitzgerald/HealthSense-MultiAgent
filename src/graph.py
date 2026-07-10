@@ -28,7 +28,9 @@ Classify the user's most recent message into exactly one intent:
 - booking: intent to schedule, reschedule, or cancel an appointment.
 - faq: policy or procedural prose (visiting rules, preparation instructions,
   billing procedures) that does not live in a table.
-- out_of_scope: anything else, or anything you cannot confidently classify.
+- out_of_scope: anything else, or anything you cannot confidently classify —
+  including greetings and small talk (e.g. "hi", "hello", "how are you",
+  "thanks") with no hospital-related request attached.
 
 Use the short recent conversation history only for context on an ambiguous
 follow-up message; classify the latest user message."""

@@ -8,6 +8,7 @@ import logging
 import warnings
 logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("transformers.utils.import_utils").setLevel(logging.ERROR)
+logging.getLogger("streamlit.watcher.local_sources_watcher").setLevel(logging.ERROR)
 warnings.filterwarnings("ignore", message=".*torchvision.*")
 
 
