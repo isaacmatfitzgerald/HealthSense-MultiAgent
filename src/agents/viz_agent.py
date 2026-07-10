@@ -23,6 +23,7 @@ Rules:
 - If the input does not contain enough data to build a meaningful chart
   (e.g. it's a single number with no categories to compare), say so in a
   code comment instead of inventing data points that weren't in the input.
+- For tabular data with many columns or rows, use plotly.graph_objects.Table instead of a chart.
 """
 
 viz_llm = init_chat_model(WORKER_MODEL, temperature=0)

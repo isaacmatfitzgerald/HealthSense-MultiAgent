@@ -8,6 +8,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
+from agents.booking.booking_agent import booking_agent
 from agents.rag_agent import rag_agent
 from agents.sql_agent import sql_agent
 from agents.viz_agent import viz_agent
@@ -58,7 +59,6 @@ def reset_turn_state(state: AgentState) -> dict:
         "documents": [],
         "proceed_to_generate": False,
         "rephrase_count": 0,
-        "booking": {},
     }
 
 
@@ -94,6 +94,8 @@ def route_after_supervisor(state: AgentState) -> str:
         return "sql_agent"
     if state["intent"] == "faq":
         return "rag_agent"
+    if state["intent"] == "booking":
+        return "booking_agent"
     return "stub_not_implemented"
 
 
@@ -101,6 +103,7 @@ def route_after_sql_agent(state: AgentState) -> str:
     if state["intent"] == "visualization":
         return "viz_agent"
     return END
+
 
 
 graph_builder = StateGraph(AgentState)
@@ -111,6 +114,7 @@ graph_builder.add_node("stub_not_implemented", stub_not_implemented)
 graph_builder.add_node("sql_agent", sql_agent)
 graph_builder.add_node("viz_agent", viz_agent)
 graph_builder.add_node("rag_agent", rag_agent)
+graph_builder.add_node("booking_agent", booking_agent)
 
 graph_builder.add_edge(START, "reset_turn_state")
 graph_builder.add_edge("reset_turn_state", "supervisor")
@@ -122,6 +126,7 @@ graph_builder.add_conditional_edges(
         "stub_not_implemented": "stub_not_implemented",
         "sql_agent": "sql_agent",
         "rag_agent": "rag_agent",
+        "booking_agent": "booking_agent",
     },
 )
 graph_builder.add_edge("fallback", END)
@@ -131,6 +136,7 @@ graph_builder.add_conditional_edges(
 )
 graph_builder.add_edge("viz_agent", END)
 graph_builder.add_edge("rag_agent", END)
+graph_builder.add_edge("booking_agent", END)
 
 
 def build_graph():

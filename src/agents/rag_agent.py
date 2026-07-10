@@ -1,5 +1,6 @@
 import os
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 from langchain.chat_models import init_chat_model
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -10,6 +11,9 @@ from pydantic import BaseModel
 
 from constants import GRADER_MODEL, WORKER_MODEL
 from state import AgentState
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 _SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROMA_PERSIST_DIR = os.path.join(_SRC_DIR, "chroma_db")
@@ -76,7 +80,7 @@ generate_llm = init_chat_model(WORKER_MODEL, temperature=0)
 
 
 def rewrite_query(state: AgentState) -> dict:
-    original_question = state["messages"][-1].content
+    original_question = state["messages"][-3].content
     previous_query = state["rag_query"]
     if previous_query:
         human_content = (

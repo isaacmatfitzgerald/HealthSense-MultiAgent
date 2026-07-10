@@ -8,6 +8,7 @@ from langgraph.graph.message import add_messages
 class BookingState(TypedDict, total=False):
     intent_details: str
     candidate_doctors: list[dict]
+    candidate_slots: list[dict]
     doctor_id: str
     slot_id: str
     patient_name: str
@@ -15,7 +16,14 @@ class BookingState(TypedDict, total=False):
     patient_phone: str
     missing_fields: list[str]
     validated: bool
+    confirmed: bool
     collect_attempts: int
+    city: str
+    state: str
+    specialty: str
+    appointment_type: str
+    consultation_mode: str
+    write_outcome: str
 
 
 class AgentState(TypedDict):
